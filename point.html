@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ぽいんとあっぷげっと！</title>
+  <style>
+    :root {
+      --main: #FF6B6B;
+      --accent: #4ECDC4;
+      --yellow: #FFE66D;
+      --bg: #F7F9FC;
+      --card: #FFFFFF;
+      --text: #2C3E50;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 50px;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--main), #FF8E8E);
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 15px auto;
+      padding: 0 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      color: var(--main);
+      font-size: 1.1rem;
+      border-bottom: 2px dashed #eee;
+      padding-bottom: 8px;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      background: #FFF9E6;
+      border: 2px solid var(--yellow);
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      background: var(--main);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: bold;
+      width: 100%;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-accent { background: var(--accent); }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    /* 広告オーバーレイ */
+    .ad-overlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      z-index: 1000;
+      padding: 20px;
+      box-sizing: border-box;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .ad-body {
+      margin: auto 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 style="margin:0; font-size:1.5rem;">🎁 ぽいんとあっぷげっと！</h1>
+  </header>
+
+  <div class="container">
+
+    <!-- 会員登録エリア -->
+    <div id="auth-section" class="card">
+      <h3>📧 無料会員登録</h3>
+      <p style="font-size:0.85rem; color:#666;">メールアドレスを入力して登録！@の前がニックネームになります。</p>
+      <input type="email" id="reg-email" placeholder="example@mail.com">
+      <button class="btn" id="reg-btn" onclick="register()">会員登録してはじめる</button>
+    </div>
+
+    <!-- メイン画面 -->
+    <div id="main-section" style="display: none;">
+
+      <!-- ステータス表示 -->
+      <div class="status-bar">
+        <div>👤 <span id="user-name"></span> さん</div>
+        <div style="text-align: right;">
+          🪙 <span id="coin-val">0</span> COIN<br>
+          💵 <span id="usd-val">0.000$</span> (<span id="jpy-val">0</span>円)
+        </div>
+      </div>
+
+      <!-- 招待コード -->
+      <div class="card">
+        <h3>🎁 招待コード入力</h3>
+        <p style="font-size:0.8rem; color:#666;">招待コード入力で <b>5000 COIN</b> 獲得！（1回のみ）</p>
+        <input type="text" id="invite-code" placeholder="招待コードを入力">
+        <button class="btn btn-accent" id="invite-btn" onclick="useInvite()">コード適用</button>
+      </div>
+
+      <!-- デイリーチェックイン -->
+      <div class="card">
+        <h3>📅 毎日チェックイン</h3>
+        <p style="font-size:0.85rem;" id="checkin-info">連続チェックイン: <b id="streak-count">0</b>日目</p>
+        <p style="font-size:0.75rem; color:#888;">※3日以上連続でどんどん1000COINずつ増量！12日達成で+2000COINボーナス！</p>
+        <button class="btn" id="checkin-btn" onclick="checkIn()">本日のチェックイン</button>
+      </div>
+
+      <!-- 13秒動画広告 -->
+      <div class="card">
+        <h3>📺 動画広告を観てGET</h3>
+        <p style="font-size:0.85rem;">13秒の広告を観て <b>1500 COIN</b> GET！（本日: <span id="ad-count">0</span>/10回）</p>
+        <button class="btn btn-accent" id="ad-btn" onclick="startAd()">動画広告を再生 (13秒)</button>
+      </div>
+
+      <!-- 15分タイマー -->
+      <div class="card">
+        <h3>⏱ 15分に1回の大チャンス</h3>
+        <p style="font-size:0.85rem;">1,000〜3,000 COIN が当たる！（本日: <span id="timer-count">0</span>/10回）</p>
+        <p id="timer-status" style="font-weight:bold; color:var(--main);"></p>
+        <button class="btn" id="timer-btn" onclick="claimTimerReward()">15分報酬をGET</button>
+      </div>
+
+      <!-- 換金申請 -->
+      <div class="card">
+        <h3>💰 換金申請</h3>
+        <p style="font-size:0.8rem; color:#d63031;">
+          【注意】換金は1日1回・最大 0.2$ まで（手数料: 0.01$）。毎日0:00にリセットされます。
+        </p>
+
+        <label>換金手段:</label>
+        <select id="withdraw-method" onchange="toggleWithdrawFields()">
+          <option value="cash">現金書留</option>
+          <option value="paypal">PayPal (最大 0.15$)</option>
+          <option value="amazon">Amazonギフト (0.3$〜0.5$)</option>
+          <option value="donate">困っている企業に寄付</option>
+        </select>
+
+        <label>出金額 ($):</label>
+        <input type="number" id="withdraw-amount" step="0.01" placeholder="例: 0.10">
+
+        <div id="field-name">
+          <label>お名前 (現金書留用):</label>
+          <input type="text" id="cash-name" placeholder="山田 太郎">
+        </div>
+
+        <div id="field-email" style="display: none;">
+          <label>PayPalメールアドレス:</label>
+          <input type="email" id="paypal-email" placeholder="paypal@example.com">
+        </div>
+
+        <button class="btn btn-accent" onclick="requestWithdraw()">換金申請メールを送る</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 13秒広告用画面 -->
+  <div class="ad-overlay" id="ad-overlay">
+    <div>
+      <h2>📺 広告視聴中...</h2>
+      <p>あと <b id="ad-timer" style="font-size:1.5rem; color:var(--yellow);">13</b> 秒</p>
+    </div>
+    <div class="ad-body">
+      <h3>この広告を見たあなた！</h3>
+      <p>ページの一番下に報酬獲得ボタンを設置しました！</p>
+    </div>
+    <div>
+      <button class="btn" id="ad-claim-btn" style="display:none; background:var(--yellow); color:#000; font-size:1.2rem;" onclick="finishAd()">
+        🎉 1500コインGET!
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = "sixyami1206@gmail.com";
+    const JPY_RATE = 155; // 1$ = 155円換算
+
+    // アプリ状態データ
+    let data = {
+      email: "",
+      coins: 0,
+      usedInvite: false,
+      lastCheckinDate: "",
+      streak: 0,
+      lastWithdrawDate: "",
+      adCountDate: "",
+      adCount: 0,
+      timerCountDate: "",
+      timerCount: 0,
+      lastTimerClaimTime: 0
+    };
+
+    // 初期化処理
+    function init() {
+      const saved = localStorage.getItem('point_up_get_data');
+      if (saved) {
+        data = Object.assign(data, JSON.parse(saved));
+      }
+
+      checkDateReset();
+
+      if (data.email) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('main-section').style.display = 'block';
+      } else {
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('main-section').style.display = 'none';
+      }
+
+      updateUI();
+      setInterval(updateTimerUI, 1000);
+    }
+
+    function saveData() {
+      localStorage.setItem('point_up_get_data', JSON.stringify(data));
+      updateUI();
+    }
+
+    // 0:00 日付リセットチェック
+    function checkDateReset() {
+      const today = new Date().toLocaleDateString();
+      if (data.adCountDate !== today) {
+        data.adCountDate = today;
+        data.adCount = 0;
+      }
+      if (data.timerCountDate !== today) {
+        data.timerCountDate = today;
+        data.timerCount = 0;
+      }
+      saveData();
+    }
+
+    // 会員登録処理
+    function register() {
+      const emailInput = document.getElementById('reg-email');
+      const email = emailInput ? emailInput.value.trim() : "";
+
+      if (!email || email.indexOf('@') === -1) {
+        alert("有効なメールアドレスを入力してください。");
+        return;
+      }
+
+      data.email = email;
+      saveData();
+
+      const nickname = email.split('@')[0];
+      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 新規会員登録通知");
+      const body = encodeURIComponent(`【新規会員登録完了】\n\nニックネーム: ${nickname}\n登録メールアドレス: ${email}`);
+      
+      // メールアプリ起動
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('main-section').style.display = 'block';
+    }
+
+    // 画面表示更新
+    function updateUI() {
+      if (!data.email) return;
+
+      const nickname = data.email.split('@')[0];
+      const usd = (data.coins / 10000) * 0.09;
+      const jpy = Math.floor(usd * JPY_RATE);
+
+      document.getElementById('user-name').innerText = nickname;
+      document.getElementById('coin-val').innerText = data.coins.toLocaleString();
+      document.getElementById('usd-val').innerText = usd.toFixed(4) + "$";
+      document.getElementById('jpy-val').innerText = jpy.toLocaleString();
+
+      // 招待コード
+      if (data.usedInvite) {
+        const invBtn = document.getElementById('invite-btn');
+        invBtn.disabled = true;
+        invBtn.innerText = "適用済み";
+      }
+
+      // チェックインボタン
+      document.getElementById('streak-count').innerText = data.streak;
+      const today = new Date().toLocaleDateString();
+      const checkinBtn = document.getElementById('checkin-btn');
+      if (data.lastCheckinDate === today) {
+        checkinBtn.disabled = true;
+        checkinBtn.innerText = "本日のチェックイン完了";
+      } else {
+        checkinBtn.disabled = false;
+        checkinBtn.innerText = "本日のチェックイン";
+      }
+
+      // カウント制限
+      document.getElementById('ad-count').innerText = data.adCount;
+      document.getElementById('ad-btn').disabled = (data.adCount >= 10);
+      document.getElementById('timer-count').innerText = data.timerCount;
+
+      toggleWithdrawFields();
+    }
+
+    // 招待コード適用
+    function useInvite() {
+      const code = document.getElementById('invite-code').value.trim();
+      if (code === "12065533") {
+        if (data.usedInvite) return;
+        data.coins += 5000;
+        data.usedInvite = true;
+        alert("🎉 招待コード適用！ 5000 COIN 獲得！");
+        saveData();
+      } else {
+        alert("無効な招待コードです。");
+      }
+    }
+
+    // デイリーチェックイン
+    function checkIn() {
+      const today = new Date().toLocaleDateString();
+      if (data.lastCheckinDate === today) return;
+
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
+      if (data.lastCheckinDate === yesterday) {
+        data.streak += 1;
+      } else {
+        data.streak = 1;
+      }
+
+      data.lastCheckinDate = today;
+
+      let reward = 2000;
+      if (data.streak >= 2) {
+        reward += (data.streak - 1) * 1000;
+      }
+      if (data.streak === 12) {
+        reward += 2000;
+        alert("🎊 12日連続達成！ボーナス +2000 COIN 獲得！");
+      }
+
+      data.coins += reward;
+      alert(`📅 チェックイン完了！ (${data.streak}日目)\n+${reward} COIN GET!`);
+      saveData();
+    }
+
+    // 13秒動画広告
+    let adInterval;
+    function startAd() {
+      if (data.adCount >= 10) return;
+      document.getElementById('ad-overlay').style.display = 'flex';
+      document.getElementById('ad-claim-btn').style.display = 'none';
+
+      let left = 13;
+      document.getElementById('ad-timer').innerText = left;
+
+      adInterval = setInterval(() => {
+        left--;
+        document.getElementById('ad-timer').innerText = left;
+        if (left <= 0) {
+          clearInterval(adInterval);
+          document.getElementById('ad-claim-btn').style.display = 'block';
+        }
+      }, 1000);
+    }
+
+    function finishAd() {
+      document.getElementById('ad-overlay').style.display = 'none';
+      data.coins += 1500;
+      data.adCount += 1;
+      alert("🎉 1500 COIN GET!");
+      saveData();
+    }
+
+    // 15分タイマー更新
+    function updateTimerUI() {
+      if (!data.email) return;
+      const now = Date.now();
+      const diff = now - data.lastTimerClaimTime;
+      const fifteenMin = 15 * 60 * 1000;
+      const btn = document.getElementById('timer-btn');
+      const status = document.getElementById('timer-status');
+
+      if (data.timerCount >= 10) {
+        btn.disabled = true;
+        status.innerText = "本日の上限(10回)に達しました";
+        return;
+      }
+
+      if (diff >= fifteenMin) {
+        btn.disabled = false;
+        status.innerText = "GETできます！";
+      } else {
+        btn.disabled = true;
+        const remainSec = Math.ceil((fifteenMin - diff) / 1000);
+        const m = Math.floor(remainSec / 60);
+        const s = remainSec % 60;
+        status.innerText = `次回獲得まで: ${m}分${s}秒`;
+      }
+    }
+
+    function claimTimerReward() {
+      if (data.timerCount >= 10) return;
+      const reward = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
+      data.coins += reward;
+      data.timerCount += 1;
+      data.lastTimerClaimTime = Date.now();
+      alert(`🎉 +${reward} COIN GET!`);
+      saveData();
+    }
+
+    // 換金フォーム表示切替
+    function toggleWithdrawFields() {
+      const method = document.getElementById('withdraw-method').value;
+      document.getElementById('field-name').style.display = (method === 'cash') ? 'block' : 'none';
+      document.getElementById('field-email').style.display = (method === 'paypal') ? 'block' : 'none';
+    }
+
+    // 換金申請処理
+    function requestWithdraw() {
+      const today = new Date().toLocaleDateString();
+      if (data.lastWithdrawDate === today) {
+        alert("換金申請は1日1回までです。0:00以降に再度お試しください。");
+        return;
+      }
+
+      const method = document.getElementById('withdraw-method').value;
+      const amount = parseFloat(document.getElementById('withdraw-amount').value);
+      const currentUsd = (data.coins / 10000) * 0.09;
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("正しい換金額を入力してください。");
+        return;
+      }
+
+      if (amount > 0.2) {
+        alert("1日の換金上限は 0.2$ までです。");
+        return;
+      }
+
+      const totalDeduct = amount + 0.01;
+      if (currentUsd < totalDeduct) {
+        alert(`残高が不足しています。（申請額 ${amount}$ + 手数料 0.01$ = 必要 ${totalDeduct.toFixed(2)}$）`);
+        return;
+      }
+
+      if (method === 'paypal' && amount > 0.15) {
+        alert("PayPalの換金上限は 0.15$ です。");
+        return;
+      }
+      if (method === 'amazon' && (amount < 0.3 || amount > 0.5)) {
+        alert("Amazonギフト券は 0.3$ 〜 0.5$ の範囲で指定してください。");
+        return;
+      }
+
+      let detail = "";
+      if (method === 'cash') {
+        const name = document.getElementById('cash-name').value.trim();
+        if (!name) { alert("お名前を入力してください。"); return; }
+        detail = `受取人氏名: ${name}`;
+      } else if (method === 'paypal') {
+        const email = document.getElementById('paypal-email').value.trim();
+        if (!email) { alert("PayPal用メールアドレスを入力してください。"); return; }
+        detail = `PayPalアドレス: ${email}`;
+      } else if (method === 'donate') {
+        detail = "寄付区分: 困っている企業への寄付";
+      } else {
+        detail = "Amazonギフト券";
+      }
+
+      const coinsToDeduct = Math.ceil((totalDeduct / 0.09) * 10000);
+      data.coins -= coinsToDeduct;
+      data.lastWithdrawDate = today;
+      saveData();
+
+      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 換金申請");
+      const body = encodeURIComponent(`【換金申請内容】\n\n申請ユーザー: ${data.email}\n換金手段: ${method}\n申請金額: ${amount}$\n手数料: 0.01$\n合計引去: ${totalDeduct.toFixed(2)}$\n詳細情報: ${detail}`);
+
+      alert("換金申請を受け付けました！メールアプリを起動します。");
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+    }
+
+    // ページ読み込み完了時に初期化実行
+    window.addEventListener('DOMContentLoaded', init);
+  </script><!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ぽいんとあっぷげっと！</title>
+  <style>
+    :root {
+      --main: #FF6B6B;
+      --accent: #4ECDC4;
+      --yellow: #FFE66D;
+      --bg: #F7F9FC;
+      --card: #FFFFFF;
+      --text: #2C3E50;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 50px;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--main), #FF8E8E);
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 15px auto;
+      padding: 0 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      color: var(--main);
+      font-size: 1.1rem;
+      border-bottom: 2px dashed #eee;
+      padding-bottom: 8px;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      background: #FFF9E6;
+      border: 2px solid var(--yellow);
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      background: var(--main);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: bold;
+      width: 100%;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-accent { background: var(--accent); }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    /* 広告オーバーレイ */
+    .ad-overlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      z-index: 1000;
+      padding: 20px;
+      box-sizing: border-box;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .ad-body {
+      margin: auto 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 style="margin:0; font-size:1.5rem;">🎁 ぽいんとあっぷげっと！</h1>
+  </header>
+
+  <div class="container">
+
+    <!-- 会員登録エリア -->
+    <div id="auth-section" class="card">
+      <h3>📧 無料会員登録</h3>
+      <p style="font-size:0.85rem; color:#666;">メールアドレスを入力して登録！@の前がニックネームになります。</p>
+      <input type="email" id="reg-email" placeholder="example@mail.com">
+      <button class="btn" id="reg-btn" onclick="register()">会員登録してはじめる</button>
+    </div>
+
+    <!-- メイン画面 -->
+    <div id="main-section" style="display: none;">
+
+      <!-- ステータス表示 -->
+      <div class="status-bar">
+        <div>👤 <span id="user-name"></span> さん</div>
+        <div style="text-align: right;">
+          🪙 <span id="coin-val">0</span> COIN<br>
+          💵 <span id="usd-val">0.000$</span> (<span id="jpy-val">0</span>円)
+        </div>
+      </div>
+
+      <!-- 招待コード -->
+      <div class="card">
+        <h3>🎁 招待コード入力</h3>
+        <p style="font-size:0.8rem; color:#666;">招待コード入力で <b>5000 COIN</b> 獲得！（1回のみ）</p>
+        <input type="text" id="invite-code" placeholder="招待コードを入力">
+        <button class="btn btn-accent" id="invite-btn" onclick="useInvite()">コード適用</button>
+      </div>
+
+      <!-- デイリーチェックイン -->
+      <div class="card">
+        <h3>📅 毎日チェックイン</h3>
+        <p style="font-size:0.85rem;" id="checkin-info">連続チェックイン: <b id="streak-count">0</b>日目</p>
+        <p style="font-size:0.75rem; color:#888;">※3日以上連続でどんどん1000COINずつ増量！12日達成で+2000COINボーナス！</p>
+        <button class="btn" id="checkin-btn" onclick="checkIn()">本日のチェックイン</button>
+      </div>
+
+      <!-- 13秒動画広告 -->
+      <div class="card">
+        <h3>📺 動画広告を観てGET</h3>
+        <p style="font-size:0.85rem;">13秒の広告を観て <b>1500 COIN</b> GET！（本日: <span id="ad-count">0</span>/10回）</p>
+        <button class="btn btn-accent" id="ad-btn" onclick="startAd()">動画広告を再生 (13秒)</button>
+      </div>
+
+      <!-- 15分タイマー -->
+      <div class="card">
+        <h3>⏱ 15分に1回の大チャンス</h3>
+        <p style="font-size:0.85rem;">1,000〜3,000 COIN が当たる！（本日: <span id="timer-count">0</span>/10回）</p>
+        <p id="timer-status" style="font-weight:bold; color:var(--main);"></p>
+        <button class="btn" id="timer-btn" onclick="claimTimerReward()">15分報酬をGET</button>
+      </div>
+
+      <!-- 換金申請 -->
+      <div class="card">
+        <h3>💰 換金申請</h3>
+        <p style="font-size:0.8rem; color:#d63031;">
+          【注意】換金は1日1回・最大 0.2$ まで（手数料: 0.01$）。毎日0:00にリセットされます。
+        </p>
+
+        <label>換金手段:</label>
+        <select id="withdraw-method" onchange="toggleWithdrawFields()">
+          <option value="cash">現金書留</option>
+          <option value="paypal">PayPal (最大 0.15$)</option>
+          <option value="amazon">Amazonギフト (0.3$〜0.5$)</option>
+          <option value="donate">困っている企業に寄付</option>
+        </select>
+
+        <label>出金額 ($):</label>
+        <input type="number" id="withdraw-amount" step="0.01" placeholder="例: 0.10">
+
+        <div id="field-name">
+          <label>お名前 (現金書留用):</label>
+          <input type="text" id="cash-name" placeholder="山田 太郎">
+        </div>
+
+        <div id="field-email" style="display: none;">
+          <label>PayPalメールアドレス:</label>
+          <input type="email" id="paypal-email" placeholder="paypal@example.com">
+        </div>
+
+        <button class="btn btn-accent" onclick="requestWithdraw()">換金申請メールを送る</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 13秒広告用画面 -->
+  <div class="ad-overlay" id="ad-overlay">
+    <div>
+      <h2>📺 広告視聴中...</h2>
+      <p>あと <b id="ad-timer" style="font-size:1.5rem; color:var(--yellow);">13</b> 秒</p>
+    </div>
+    <div class="ad-body">
+      <h3>この広告を見たあなた！</h3>
+      <p>ページの一番下に報酬獲得ボタンを設置しました！</p>
+    </div>
+    <div>
+      <button class="btn" id="ad-claim-btn" style="display:none; background:var(--yellow); color:#000; font-size:1.2rem;" onclick="finishAd()">
+        🎉 1500コインGET!
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = "sixyami1206@gmail.com";
+    const JPY_RATE = 155; // 1$ = 155円換算
+
+    // アプリ状態データ
+    let data = {
+      email: "",
+      coins: 0,
+      usedInvite: false,
+      lastCheckinDate: "",
+      streak: 0,
+      lastWithdrawDate: "",
+      adCountDate: "",
+      adCount: 0,
+      timerCountDate: "",
+      timerCount: 0,
+      lastTimerClaimTime: 0
+    };
+
+    // 初期化処理
+    function init() {
+      const saved = localStorage.getItem('point_up_get_data');
+      if (saved) {
+        data = Object.assign(data, JSON.parse(saved));
+      }
+
+      checkDateReset();
+
+      if (data.email) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('main-section').style.display = 'block';
+      } else {
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('main-section').style.display = 'none';
+      }
+
+      updateUI();
+      setInterval(updateTimerUI, 1000);
+    }
+
+    function saveData() {
+      localStorage.setItem('point_up_get_data', JSON.stringify(data));
+      updateUI();
+    }
+
+    // 0:00 日付リセットチェック
+    function checkDateReset() {
+      const today = new Date().toLocaleDateString();
+      if (data.adCountDate !== today) {
+        data.adCountDate = today;
+        data.adCount = 0;
+      }
+      if (data.timerCountDate !== today) {
+        data.timerCountDate = today;
+        data.timerCount = 0;
+      }
+      saveData();
+    }
+
+    // 会員登録処理
+    function register() {
+      const emailInput = document.getElementById('reg-email');
+      const email = emailInput ? emailInput.value.trim() : "";
+
+      if (!email || email.indexOf('@') === -1) {
+        alert("有効なメールアドレスを入力してください。");
+        return;
+      }
+
+      data.email = email;
+      saveData();
+
+      const nickname = email.split('@')[0];
+      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 新規会員登録通知");
+      const body = encodeURIComponent(`【新規会員登録完了】\n\nニックネーム: ${nickname}\n登録メールアドレス: ${email}`);
+      
+      // メールアプリ起動
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('main-section').style.display = 'block';
+    }
+
+    // 画面表示更新
+    function updateUI() {
+      if (!data.email) return;
+
+      const nickname = data.email.split('@')[0];
+      const usd = (data.coins / 10000) * 0.09;
+      const jpy = Math.floor(usd * JPY_RATE);
+
+      document.getElementById('user-name').innerText = nickname;
+      document.getElementById('coin-val').innerText = data.coins.toLocaleString();
+      document.getElementById('usd-val').innerText = usd.toFixed(4) + "$";
+      document.getElementById('jpy-val').innerText = jpy.toLocaleString();
+
+      // 招待コード
+      if (data.usedInvite) {
+        const invBtn = document.getElementById('invite-btn');
+        invBtn.disabled = true;
+        invBtn.innerText = "適用済み";
+      }
+
+      // チェックインボタン
+      document.getElementById('streak-count').innerText = data.streak;
+      const today = new Date().toLocaleDateString();
+      const checkinBtn = document.getElementById('checkin-btn');
+      if (data.lastCheckinDate === today) {
+        checkinBtn.disabled = true;
+        checkinBtn.innerText = "本日のチェックイン完了";
+      } else {
+        checkinBtn.disabled = false;
+        checkinBtn.innerText = "本日のチェックイン";
+      }
+
+      // カウント制限
+      document.getElementById('ad-count').innerText = data.adCount;
+      document.getElementById('ad-btn').disabled = (data.adCount >= 10);
+      document.getElementById('timer-count').innerText = data.timerCount;
+
+      toggleWithdrawFields();
+    }
+
+    // 招待コード適用
+    function useInvite() {
+      const code = document.getElementById('invite-code').value.trim();
+      if (code === "12065533") {
+        if (data.usedInvite) return;
+        data.coins += 5000;
+        data.usedInvite = true;
+        alert("🎉 招待コード適用！ 5000 COIN 獲得！");
+        saveData();
+      } else {
+        alert("無効な招待コードです。");
+      }
+    }
+
+    // デイリーチェックイン
+    function checkIn() {
+      const today = new Date().toLocaleDateString();
+      if (data.lastCheckinDate === today) return;
+
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
+      if (data.lastCheckinDate === yesterday) {
+        data.streak += 1;
+      } else {
+        data.streak = 1;
+      }
+
+      data.lastCheckinDate = today;
+
+      let reward = 2000;
+      if (data.streak >= 2) {
+        reward += (data.streak - 1) * 1000;
+      }
+      if (data.streak === 12) {
+        reward += 2000;
+        alert("🎊 12日連続達成！ボーナス +2000 COIN 獲得！");
+      }
+
+      data.coins += reward;
+      alert(`📅 チェックイン完了！ (${data.streak}日目)\n+${reward} COIN GET!`);
+      saveData();
+    }
+
+    // 13秒動画広告
+    let adInterval;
+    function startAd() {
+      if (data.adCount >= 10) return;
+      document.getElementById('ad-overlay').style.display = 'flex';
+      document.getElementById('ad-claim-btn').style.display = 'none';
+
+      let left = 13;
+      document.getElementById('ad-timer').innerText = left;
+
+      adInterval = setInterval(() => {
+        left--;
+        document.getElementById('ad-timer').innerText = left;
+        if (left <= 0) {
+          clearInterval(adInterval);
+          document.getElementById('ad-claim-btn').style.display = 'block';
+        }
+      }, 1000);
+    }
+
+    function finishAd() {
+      document.getElementById('ad-overlay').style.display = 'none';
+      data.coins += 1500;
+      data.adCount += 1;
+      alert("🎉 1500 COIN GET!");
+      saveData();
+    }
+
+    // 15分タイマー更新
+    function updateTimerUI() {
+      if (!data.email) return;
+      const now = Date.now();
+      const diff = now - data.lastTimerClaimTime;
+      const fifteenMin = 15 * 60 * 1000;
+      const btn = document.getElementById('timer-btn');
+      const status = document.getElementById('timer-status');
+
+      if (data.timerCount >= 10) {
+        btn.disabled = true;
+        status.innerText = "本日の上限(10回)に達しました";
+        return;
+      }
+
+      if (diff >= fifteenMin) {
+        btn.disabled = false;
+        status.innerText = "GETできます！";
+      } else {
+        btn.disabled = true;
+        const remainSec = Math.ceil((fifteenMin - diff) / 1000);
+        const m = Math.floor(remainSec / 60);
+        const s = remainSec % 60;
+        status.innerText = `次回獲得まで: ${m}分${s}秒`;
+      }
+    }
+
+    function claimTimerReward() {
+      if (data.timerCount >= 10) return;
+      const reward = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
+      data.coins += reward;
+      data.timerCount += 1;
+      data.lastTimerClaimTime = Date.now();
+      alert(`🎉 +${reward} COIN GET!`);
+      saveData();
+    }
+
+    // 換金フォーム表示切替
+    function toggleWithdrawFields() {
+      const method = document.getElementById('withdraw-method').value;
+      document.getElementById('field-name').style.display = (method === 'cash') ? 'block' : 'none';
+      document.getElementById('field-email').style.display = (method === 'paypal') ? 'block' : 'none';
+    }
+
+    // 換金申請処理
+    function requestWithdraw() {
+      const today = new Date().toLocaleDateString();
+      if (data.lastWithdrawDate === today) {
+        alert("換金申請は1日1回までです。0:00以降に再度お試しください。");
+        return;
+      }
+
+      const method = document.getElementById('withdraw-method').value;
+      const amount = parseFloat(document.getElementById('withdraw-amount').value);
+      const currentUsd = (data.coins / 10000) * 0.09;
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("正しい換金額を入力してください。");
+        return;
+      }
+
+      if (amount > 0.2) {
+        alert("1日の換金上限は 0.2$ までです。");
+        return;
+      }
+
+      const totalDeduct = amount + 0.01;
+      if (currentUsd < totalDeduct) {
+        alert(`残高が不足しています。（申請額 ${amount}$ + 手数料 0.01$ = 必要 ${totalDeduct.toFixed(2)}$）`);
+        return;
+      }
+
+      if (method === 'paypal' && amount > 0.15) {
+        alert("PayPalの換金上限は 0.15$ です。");
+        return;
+      }
+      if (method === 'amazon' && (amount < 0.3 || amount > 0.5)) {
+        alert("Amazonギフト券は 0.3$ 〜 0.5$ の範囲で指定してください。");
+        return;
+      }
+
+      let detail = "";
+      if (method === 'cash') {
+        const name = document.getElementById('cash-name').value.trim();
+        if (!name) { alert("お名前を入力してください。"); return; }
+        detail = `受取人氏名: ${name}`;
+      } else if (method === 'paypal') {
+        const email = document.getElementById('paypal-email').value.trim();
+        if (!email) { alert("PayPal用メールアドレスを入力してください。"); return; }
+        detail = `PayPalアドレス: ${email}`;
+      } else if (method === 'donate') {
+        detail = "寄付区分: 困っている企業への寄付";
+      } else {
+        detail = "Amazonギフト券";
+      }
+
+      const coinsToDeduct = Math.ceil((totalDeduct / 0.09) * 10000);
+      data.coins -= coinsToDeduct;
+      data.lastWithdrawDate = today;
+      saveData();
+
+      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 換金申請");
+      const body = encodeURIComponent(`【換金申請内容】\n\n申請ユーザー: ${data.email}\n換金手段: ${method}\n申請金額: ${amount}$\n手数料: 0.01$\n合計引去: ${totalDeduct.toFixed(2)}$\n詳細情報: ${detail}`);
+
+      alert("換金申請を受け付けました！メールアプリを起動します。");
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+    }
+
+    // ページ読み込み完了時に初期化実行
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
+
+</body>
+</html>
+
