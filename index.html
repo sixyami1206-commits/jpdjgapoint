@@ -91,6 +91,7 @@
     .btn:disabled { background: #ccc !important; cursor: not-allowed; }
     .btn-accent { background: var(--accent); }
     .btn-small { padding: 6px 12px; font-size: 0.8rem; width: auto; }
+    .btn-danger { background: #e74c3c; }
 
     input, select {
       width: 100%;
@@ -110,7 +111,7 @@
       font-size: 0.85rem;
     }
 
-    /* 全画面オーバーレイ（インストーラー・アプデ・削除中など） */
+    /* モーダル */
     .full-screen-modal {
       display: none;
       position: fixed;
@@ -144,39 +145,59 @@
       transition: width 0.1s linear;
     }
 
-    /* 広告オーバーレイ */
-    .ad-overlay {
-      display: none;
-      position: fixed;
-      top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,0,0.9);
-      color: white;
-      z-index: 1000;
-      padding: 20px;
-      box-sizing: border-box;
-      flex-direction: column;
-      justify-content: space-between;
-      text-align: center;
-    }
-
-    /* ナブタブ */
     .nav-tabs {
       display: flex;
-      gap: 10px;
+      gap: 5px;
       margin-bottom: 15px;
     }
     .nav-tab {
       flex: 1;
-      padding: 10px;
+      padding: 8px 4px;
       text-align: center;
       background: #e0e0e0;
       border-radius: 8px;
       font-weight: bold;
+      font-size: 0.8rem;
       cursor: pointer;
     }
     .nav-tab.active {
       background: var(--main);
       color: white;
+    }
+
+    /* ゲーム画面スタイル */
+    #othello-board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 2px;
+      background: #006400;
+      padding: 4px;
+      border-radius: 8px;
+      max-width: 300px;
+      margin: 10px auto;
+    }
+    .othello-cell {
+      width: 45px; height: 45px;
+      background: 228b22;
+      background-color: #2e8b57;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .piece {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+    }
+    .piece.black { background: #000; }
+    .piece.white { background: #fff; }
+
+    #tetris-canvas {
+      background: #000;
+      display: block;
+      margin: 10px auto;
+      border: 2px solid #333;
     }
   </style>
 </head>
@@ -184,20 +205,24 @@
 
   <header>
     <h1 style="margin:0; font-size:1.3rem;">🎁 ぽいんとあっぷげっと！</h1>
-    <button class="btn-delete-data" onclick="confirmDeleteData()">🗑 データを削除</button>
+    <button class="btn-delete-data" onclick="openDeleteModal()">🗑 データを削除</button>
   </header>
 
   <div class="container">
 
-    <!-- 初回ダウンロード / アプデ / 削除 / 破損画面 -->
+    <!-- システムモーダル（インストーラー・アプデ・消去・ペナルティ） -->
     <div id="system-modal" class="full-screen-modal">
       <h2 id="sys-title">ぽいんとあっぷげっとへようこそ！</h2>
       <p id="sys-desc">データをバックにいんすとーるします！</p>
       <div class="progress-bg"><div id="sys-progress" class="progress-fill"></div></div>
       <p id="sys-status" style="font-family: monospace;">0 / 299978 KB (0%)</p>
+      <div id="sys-btn-area" style="margin-top: 15px; display:none;">
+        <button class="btn btn-danger" id="sys-cancel-btn" onclick="cancelDeletion()">キャンセル</button>
+        <button class="btn btn-accent" id="sys-confirm-btn" onclick="executeDeletion(true)" style="display:none;">削除を確定する（はい）</button>
+      </div>
     </div>
 
-    <!-- 会員登録エリア -->
+    <!-- 会員登録画面 -->
     <div id="auth-section" class="card" style="display: none;">
       <h3>📧 無料会員登録</h3>
       <p style="font-size:0.85rem; color:#666;">メールアドレスを入力して登録！@の前がニックネームになります。</p>
@@ -208,13 +233,14 @@
     <!-- メイン画面 -->
     <div id="main-section" style="display: none;">
 
-      <!-- ページ切り替えタブ -->
+      <!-- ナビゲーション -->
       <div class="nav-tabs">
-        <div class="nav-tab active" id="tab-btn-main" onclick="switchTab('main')">🏠 ポイ活ホーム</div>
-        <div class="nav-tab" id="tab-btn-lottery" onclick="switchTab('lottery')">🎟 抽選タスク＆ガチャ</div>
+        <div class="nav-tab active" id="tab-btn-main" onclick="switchTab('main')">🏠 ホーム</div>
+        <div class="nav-tab" id="tab-btn-games" onclick="switchTab('games')">🎮 ゲーム</div>
+        <div class="nav-tab" id="tab-btn-lottery" onclick="switchTab('lottery')">🎟 抽選＆タスク</div>
       </div>
 
-      <!-- ステータス表示 -->
+      <!-- ステータス -->
       <div class="status-bar">
         <div>👤 <span id="user-name"></span> さん</div>
         <div style="text-align: right;">
@@ -225,71 +251,18 @@
 
       <!-- PAGE 1: メインポイ活 -->
       <div id="page-main">
-        <!-- 招待コード -->
-        <div class="card">
-          <h3>🎁 招待コード入力</h3>
-          <p style="font-size:0.8rem; color:#666;">招待コード入力で <b>5000 COIN</b> 獲得！（1回のみ）</p>
-          <input type="text" id="invite-code" placeholder="招待コードを入力">
-          <button class="btn btn-accent" id="invite-btn" onclick="useInvite()">コード適用</button>
-        </div>
-
-        <!-- デイリーミッション -->
-        <div class="card" style="border: 2px solid var(--accent);">
-          <h3>🎯 本日のデイリーミッション</h3>
-          <ul style="font-size:0.85rem; padding-left: 20px; margin: 10px 0;">
-            <li>動画広告を1回以上観る (<span id="m-ad">未</span>)</li>
-            <li>アンケートに1回以上答える (<span id="m-surv">未</span>)</li>
-          </ul>
-          <button class="btn btn-accent" id="mission-btn" onclick="claimMission()">ミッションコンプリート報酬 (+2000 COIN)</button>
-        </div>
-
-        <!-- デイリーチェックイン -->
-        <div class="card">
-          <h3>📅 毎日チェックイン</h3>
-          <p style="font-size:0.85rem;" id="checkin-info">連続チェックイン: <b id="streak-count">0</b>日目</p>
-          <p style="font-size:0.75rem; color:#888;">※3日以上連続で増量！12日達成でボーナス！</p>
-          <button class="btn" id="checkin-btn" onclick="checkIn()">本日のチェックイン</button>
-        </div>
-
-        <!-- お天気アンケート -->
-        <div class="card">
-          <h3>📝 お天気・体感アンケート</h3>
-          <p style="font-size:0.85rem;">質問に答えて <b id="reward-survey-val">1000</b> COIN GET！（本日: <span id="survey-count">0</span>/2回）</p>
-          <div id="survey-area">
-            <p id="survey-q" style="font-weight:bold; margin-bottom:8px;"></p>
-            <select id="survey-ans"></select>
-            <button class="btn" id="survey-btn" onclick="submitSurvey()">回答してCOIN GET</button>
-          </div>
-        </div>
-
-        <!-- 13秒動画広告 -->
-        <div class="card">
-          <h3>📺 動画広告を観てGET</h3>
-          <p style="font-size:0.85rem;">13秒の広告を観て <b id="reward-ad-val">1500</b> COIN GET！（本日: <span id="ad-count">0</span>/10回）</p>
-          <button class="btn btn-accent" id="ad-btn" onclick="startAd()">動画広告を再生 (13秒)</button>
-        </div>
-
-        <!-- 15分タイマー -->
-        <div class="card">
-          <h3>⏱ 15分に1回の大チャンス</h3>
-          <p style="font-size:0.85rem;">1,000〜3,000 COIN が当たる！（本日: <span id="timer-count">0</span>/10回）</p>
-          <p id="timer-status" style="font-weight:bold; color:var(--main);"></p>
-          <button class="btn" id="timer-btn" onclick="claimTimerReward()">15分報酬をGET</button>
-        </div>
-
-        <!-- 換金申請 -->
         <div class="card">
           <h3>💰 換金申請 (1800 COIN = 0.01$)</h3>
           <p style="font-size:0.8rem; color:#d63031;">
-            【注意】換金は1日1回・最大 0.2$ まで（手数料: 0.01$）。毎日0:00リセット。
+            【ルール】1日2回まで申請可能（手数料: 0.01$）<br>
+            ・PayPal: 50円まで / 現金: 20円まで / 寄付: 制限なし
           </p>
 
           <label>換金手段:</label>
           <select id="withdraw-method" onchange="toggleWithdrawFields()">
-            <option value="現金書留">現金書留</option>
-            <option value="PayPal">PayPal (最大 0.15$)</option>
-            <option value="Amazonギフト">Amazonギフト (0.3$〜0.5$)</option>
-            <option value="企業寄付">困っている企業に寄付</option>
+            <option value="PayPal">PayPal (上限 50円 / 約0.32$)</option>
+            <option value="現金書留">現金書留 (上限 20円 / 約0.13$)</option>
+            <option value="企業寄付">困っている企業に寄付 (制限なし)</option>
           </select>
 
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -298,84 +271,94 @@
           </div>
           <input type="number" id="withdraw-amount" step="0.01" placeholder="例: 0.10">
 
-          <div id="field-name">
+          <div id="field-name" style="display:none;">
             <label>お名前 (現金書留用):</label>
             <input type="text" id="cash-name" placeholder="山田 太郎">
           </div>
 
-          <div id="field-email" style="display: none;">
+          <div id="field-email">
             <label>PayPalメールアドレス:</label>
             <input type="email" id="paypal-email" placeholder="paypal@example.com">
           </div>
 
-          <button class="btn btn-accent" onclick="requestWithdraw()">換金申請メールを送る</button>
+          <button class="btn btn-accent" id="withdraw-submit-btn" onclick="requestWithdraw()">換金申請メールを送る</button>
         </div>
 
-        <!-- 換金履歴 -->
         <div class="card">
           <h3>📜 換金履歴</h3>
           <div id="history-list"></div>
         </div>
       </div>
 
-      <!-- PAGE 2: 抽選タスク & ガチャ -->
-      <div id="page-lottery" style="display:none;">
+      <!-- PAGE 2: ミニゲーム -->
+      <div id="page-games" style="display:none;">
         
-        <!-- チケット購入 -->
+        <!-- 簡易オセロ -->
+        <div class="card">
+          <h3>⚪️⚫️ 簡易オセロ (勝利で 4,000 COIN)</h3>
+          <p style="font-size:0.8rem; color:#666;">あなたは黒（⚪️CPU）。盤面をタップして挟もう！</p>
+          <div id="othello-status" style="font-weight:bold; text-align:center;">対戦を開始してください</div>
+          <div id="othello-board"></div>
+          <button class="btn" onclick="startOthello()">対局スタート</button>
+        </div>
+
+        <!-- 連打チャレンジ -->
+        <div class="card">
+          <h3>⚡️ 10秒連打チャレンジ</h3>
+          <p style="font-size:0.8rem; color:#666;">1タップ = 50 COIN！(⚠️オートクリッカー検知機能つき)</p>
+          <div style="text-align:center; margin:10px 0;">
+            <span style="font-size:1.5rem; font-weight:bold;" id="tap-count-display">0</span> 回
+            | 残り <span id="tap-timer-display">10</span> 秒
+          </div>
+          <button class="btn btn-accent" id="tap-btn" onclick="handleTap()" disabled>タップ開始まで待機</button>
+          <button class="btn" style="margin-top:8px; background:#34495e;" onclick="startTapGame()">連打ゲームスタート</button>
+        </div>
+
+        <!-- 簡易テトリス -->
+        <div class="card">
+          <h3>🧩 簡易テトリス</h3>
+          <p style="font-size:0.8rem; color:#666;">1ライン消すごとに 1,000 COIN！</p>
+          <canvas id="tetris-canvas" width="160" height="320"></canvas>
+          <div style="display:flex; gap:5px; margin-top:5px;">
+            <button class="btn" onclick="moveTetris(-1)">◀️</button>
+            <button class="btn" onclick="rotateTetris()">🔄</button>
+            <button class="btn" onclick="moveTetris(1)">▶️</button>
+            <button class="btn btn-accent" onclick="dropTetris()">⬇️</button>
+          </div>
+          <button class="btn" style="margin-top:8px; background:#27ae60;" onclick="startTetris()">ゲームスタート</button>
+        </div>
+
+      </div>
+
+      <!-- PAGE 3: 抽選タスク -->
+      <div id="page-lottery" style="display:none;">
         <div class="card" style="background: #E8F8F5;">
           <h3>🎟 チケットショップ</h3>
-          <p style="font-size:0.85rem;">3,000 COIN で 1 TICKET と交換できます！</p>
+          <p style="font-size:0.85rem;">3,000 COIN で 1 TICKET 交換！</p>
           <button class="btn btn-accent" onclick="buyTicket()">3,000 COIN で 1 TICKET 買う</button>
         </div>
 
-        <!-- SNSタスク -->
         <div class="card">
-          <h3>🔗 SNS訪問タスク (一日各1回 / 各2 TICKET)</h3>
-          <p style="font-size:0.8rem; color:#666;">ボタンを押してページを開くとチケットを獲得できます！</p>
-          
+          <h3>🔗 SNS訪問タスク (1日各1回 / 各2 TICKET)</h3>
           <button class="btn" style="background:#FF0000; margin-bottom:8px;" id="task-yt" onclick="openSnsTask('yt', 'https://youtube.com')">▶️ YouTubeを開く (+2 TICKET)</button>
           <button class="btn" style="background:#06C755; margin-bottom:8px;" id="task-line" onclick="openSnsTask('line', 'https://line.me')">💬 LINEを開く (+2 TICKET)</button>
           <button class="btn" style="background:#000000; margin-bottom:8px;" id="task-tt" onclick="openSnsTask('tt', 'https://tiktok.com')">🎵 TikTokを開く (+2 TICKET)</button>
           <button class="btn" style="background:#1DA1F2; margin-bottom:8px;" id="task-x" onclick="openSnsTask('x', 'https://x.com')">🐦 Xを開く (+2 TICKET)</button>
         </div>
 
-        <!-- 抽選ガチャ -->
         <div class="card">
           <h3>🎰 駄菓子リアル抽選ガチャ</h3>
-          
           <div style="border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:12px;">
-            <h4>🎲 3 TICKET で1回抽選</h4>
-            <p style="font-size:0.8rem; color:#666;">景品：うまい棒ランダム味、かばやき太郎、ガム</p>
+            <h4>🎲 3 TICKET で1回</h4>
             <button class="btn btn-accent" onclick="playGacha(3)">3 TICKET で引く</button>
           </div>
-
           <div style="border:1px solid #ddd; padding:10px; border-radius:8px;">
-            <h4>🎰 10 TICKET で1回抽選</h4>
-            <p style="font-size:0.8rem; color:#666;">景品：ガリガリくん、ミルクバー、うまい棒</p>
+            <h4>🎰 10 TICKET で1回</h4>
             <button class="btn" style="background:#f39c12;" onclick="playGacha(10)">10 TICKET で引く</button>
           </div>
         </div>
-
       </div>
 
-    </div>
-
-  </div>
-
-  <!-- 13秒広告用画面 -->
-  <div class="ad-overlay" id="ad-overlay">
-    <div>
-      <h2>📺 広告視聴中...</h2>
-      <p>あと <b id="ad-timer" style="font-size:1.5rem; color:var(--yellow);">13</b> 秒</p>
-    </div>
-    <div class="ad-body">
-      <h3>この広告を見たあなた！</h3>
-      <p>ページの一番下に報酬獲得ボタンを設置しました！</p>
-    </div>
-    <div>
-      <button class="btn" id="ad-claim-btn" style="display:none; background:var(--yellow); color:#000; font-size:1.2rem;" onclick="finishAd()">
-        🎉 コインGET!
-      </button>
     </div>
   </div>
 
@@ -383,21 +366,6 @@
     const ADMIN_EMAIL = "sixyami1206@gmail.com";
     const JPY_RATE = 155;
 
-    // パレットパターン (アプデ時に変化)
-    const COLOR_PALETTES = [
-      { main: "#FF6B6B", accent: "#4ECDC4", bg: "#F7F9FC" },
-      { main: "#9B59B6", accent: "#3498DB", bg: "#F4ECF7" },
-      { main: "#E67E22", accent: "#2ECC71", bg: "#FEF5E7" },
-      { main: "#E84393", accent: "#00CEC9", bg: "#FD79A811" }
-    ];
-
-    const SURVEY_QUESTIONS = [
-      { q: "今日の天気は？", opts: ["晴れ ☀️", "くもり ☁️", "雨 🌧️"] },
-      { q: "今の体感温度は？", opts: ["暑い 🥵", "ちょうどいい 😌", "寒い 🥶"] },
-      { q: "今の気分は？", opts: ["最高！ 😆", "普通 🙂", "お疲れ気味 😴"] }
-    ];
-
-    // アプリデータ
     let data = {
       isInstalled: false,
       version: 1,
@@ -405,56 +373,40 @@
       email: "",
       coins: 0,
       tickets: 0,
-      usedInvite: false,
-      lastCheckinDate: "",
-      streak: 0,
-      lastWithdrawDate: "",
-      adCountDate: "",
-      adCount: 0,
-      timerCountDate: "",
-      timerCount: 0,
-      surveyCountDate: "",
-      surveyCount: 0,
-      missionClaimedDate: "",
-      lastTimerClaimTime: 0,
-      snsTasksDate: "",
-      snsTasks: { yt: false, line: false, tt: false, x: false },
-      gachaPlayedCount: 0, // 初回当選防止カウンター
+      withdrawCountDate: "",
+      withdrawCount: 0,
+      autoclickerViolations: 0,
+      gameBanUntil: 0,
+      appBanUntil: 0,
+      gachaPlayedCount: 0,
       history: [],
-      // 動的設定
-      surveyReward: 1000,
-      adReward: 1500
+      snsTasksDate: "",
+      snsTasks: { yt: false, line: false, tt: false, x: false }
     };
+
+    let deleteTimer = null;
 
     function init() {
       const saved = localStorage.getItem('point_up_get_data');
-      if (saved) {
-        data = Object.assign(data, JSON.parse(saved));
-      }
+      if (saved) data = Object.assign(data, JSON.parse(saved));
 
-      // 初回インストーラーチェック
       if (!data.isInstalled) {
         runInstaller();
         return;
       }
 
-      // 2時間ごとのアプデチェック
-      checkVersionUpdates(() => {
-        checkDateReset();
-        applyTheme();
+      checkBans();
+      checkDateReset();
 
-        if (data.email) {
-          document.getElementById('auth-section').style.display = 'none';
-          document.getElementById('main-section').style.display = 'block';
-          setupSurvey();
-        } else {
-          document.getElementById('auth-section').style.display = 'block';
-          document.getElementById('main-section').style.display = 'none';
-        }
+      if (data.email) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('main-section').style.display = 'block';
+      } else {
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('main-section').style.display = 'none';
+      }
 
-        updateUI();
-        setInterval(updateTimerUI, 1000);
-      });
+      updateUI();
     }
 
     function saveData() {
@@ -462,35 +414,29 @@
       updateUI();
     }
 
-    // テーマ・色切り替え
-    function applyTheme() {
-      const p = COLOR_PALETTES[(data.version - 1) % COLOR_PALETTES.length];
-      document.documentElement.style.setProperty('--main', p.main);
-      document.documentElement.style.setProperty('--accent', p.accent);
-      document.documentElement.style.setProperty('--bg', p.bg);
+    // BANチェック
+    function checkBans() {
+      const now = Date.now();
+      if (data.appBanUntil > now) {
+        alert(`⚠️ 不正検知ペナルティ中！あと ${Math.ceil((data.appBanUntil - now)/60000)} 分間ポイ活ができません。`);
+        document.getElementById('withdraw-submit-btn').disabled = true;
+      }
     }
 
-    // 初回インストーラー (299978 KB)
+    // 初回インストール
     function runInstaller() {
       const modal = document.getElementById('system-modal');
       modal.style.display = 'flex';
-      document.getElementById('sys-title').innerText = "ぽいんとあっぷげっとへようこそ！";
-      document.getElementById('sys-desc').innerText = "データをバックにいんすとーるします！";
-
       let loaded = 0;
       const total = 299978;
       const interval = setInterval(() => {
-        loaded += Math.floor(Math.random() * 15000) + 5000;
+        loaded += 15000;
         if (loaded >= total) {
           loaded = total;
           clearInterval(interval);
           data.isInstalled = true;
-          data.lastUpdateCheckTime = Date.now();
           saveData();
-          setTimeout(() => {
-            modal.style.display = 'none';
-            init();
-          }, 500);
+          setTimeout(() => { modal.style.display = 'none'; init(); }, 500);
         }
         const pct = Math.floor((loaded / total) * 100);
         document.getElementById('sys-progress').style.width = pct + "%";
@@ -498,100 +444,67 @@
       }, 100);
     }
 
-    // バージョンアップデート判定 (2時間ごと = 7200000ms)
-    function checkVersionUpdates(callback) {
-      const now = Date.now();
-      const elapsed = now - (data.lastUpdateCheckTime || now);
-      const missedUpdates = Math.floor(elapsed / (2 * 60 * 60 * 1000));
-
-      if (missedUpdates > 0) {
-        const modal = document.getElementById('system-modal');
-        modal.style.display = 'flex';
-
-        const newVer = data.version + missedUpdates;
-        const totalKb = missedUpdates * 35827;
-
-        document.getElementById('sys-title').innerText = `Version ${newVer} のアップデートが来ています！`;
-        document.getElementById('sys-desc').innerText = `内容：モデルの変更・バグの修正 (${missedUpdates}回分のアプデ)`;
-
-        let loaded = 0;
-        const interval = setInterval(() => {
-          loaded += Math.floor(totalKb / 20) + 100;
-          if (loaded >= totalKb) {
-            loaded = totalKb;
-            clearInterval(interval);
-            data.version = newVer;
-            data.lastUpdateCheckTime = now;
-            // アプデで報酬額を少し変動
-            data.surveyReward = 1000 + (data.version * 50) % 500;
-            data.adReward = 1500 + (data.version * 100) % 1000;
-            saveData();
-            setTimeout(() => {
-              modal.style.display = 'none';
-              callback();
-            }, 500);
-          }
-          const pct = Math.floor((loaded / totalKb) * 100);
-          document.getElementById('sys-progress').style.width = pct + "%";
-          document.getElementById('sys-status').innerText = `${loaded.toLocaleString()} / ${totalKb.toLocaleString()} KB (${pct}%)`;
-        }, 100);
-      } else {
-        callback();
+    // 削除モーダル
+    function openDeleteModal() {
+      if (confirm("ローカルストレージからすべてのデータを削除します。よろしいですか？\nアカウントは再作成可能です。")) {
+        startDeleteCountdown();
       }
     }
 
-    // データ削除ボタン
-    function confirmDeleteData() {
-      const res = confirm("ローカルストレージからすべてのデータを削除します。よろしいですか？\nアカウントは再作成可能です。");
+    // 削除カウントダウン（キャンセルの猶予20秒）
+    function startDeleteCountdown() {
       const modal = document.getElementById('system-modal');
-      
-      if (res) {
-        // はい -> 20秒間データ削除中
-        modal.style.display = 'flex';
-        document.getElementById('sys-title').innerText = "データ削除中...";
-        document.getElementById('sys-desc').innerText = "完全消去を行っています。そのままお待ちください。";
-        
-        let sec = 20;
-        document.getElementById('sys-progress').style.width = "100%";
+      modal.style.display = 'flex';
+      document.getElementById('sys-title').innerText = "データ削除中...";
+      document.getElementById('sys-desc').innerText = "20秒後に完全消去されます。キャンセルできます。";
+      document.getElementById('sys-btn-area').style.display = 'block';
+      document.getElementById('sys-cancel-btn').style.display = 'inline-block';
+      document.getElementById('sys-confirm-btn').style.display = 'none';
+
+      let sec = 20;
+      document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
+
+      deleteTimer = setInterval(() => {
+        sec--;
         document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
-
-        const interval = setInterval(() => {
-          sec--;
-          document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
-          if (sec <= 0) {
-            clearInterval(interval);
-            localStorage.removeItem('point_up_get_data');
-            location.reload();
-          }
-        }, 1000);
-
-      } else {
-        // いいえ -> 破損＆30秒自動修復
-        modal.style.display = 'flex';
-        document.getElementById('sys-title').innerText = "⚠️ データが破損しています！";
-        document.getElementById('sys-desc').innerText = "自動修復を実行中です。ブラウザを閉じないでください。";
-        
-        let sec = 30;
-        const interval = setInterval(() => {
-          sec--;
-          const pct = Math.floor(((30 - sec) / 30) * 100);
-          document.getElementById('sys-progress').style.width = pct + "%";
-          document.getElementById('sys-status').innerText = `修復中... あと ${sec} 秒 (${pct}%)`;
-          if (sec <= 0) {
-            clearInterval(interval);
-            modal.style.display = 'none';
-            alert("修復が完了しました。");
-          }
-        }, 1000);
-      }
+        if (sec <= 0) {
+          clearInterval(deleteTimer);
+          executeDeletion(false);
+        }
+      }, 1000);
     }
 
-    // 0:00 日付リセット
+    // キャンセル押下時（修復モード30秒）
+    function cancelDeletion() {
+      clearInterval(deleteTimer);
+      document.getElementById('sys-title').innerText = "⚠️ データが破損しています！";
+      document.getElementById('sys-desc').innerText = "修復してください。30秒間自動修復中...";
+      document.getElementById('sys-btn-area').style.display = 'none';
+
+      let sec = 30;
+      const interval = setInterval(() => {
+        sec--;
+        document.getElementById('sys-status').innerText = `修復中... あと ${sec} 秒`;
+        if (sec <= 0) {
+          clearInterval(interval);
+          document.getElementById('system-modal').style.display = 'none';
+          alert("自動修復が完了しました。");
+        }
+      }, 1000);
+    }
+
+    function executeDeletion(forced) {
+      localStorage.removeItem('point_up_get_data');
+      location.reload();
+    }
+
+    // 日付リセット
     function checkDateReset() {
       const today = new Date().toLocaleDateString();
-      if (data.adCountDate !== today) { data.adCountDate = today; data.adCount = 0; }
-      if (data.timerCountDate !== today) { data.timerCountDate = today; data.timerCount = 0; }
-      if (data.surveyCountDate !== today) { data.surveyCountDate = today; data.surveyCount = 0; }
+      if (data.withdrawCountDate !== today) {
+        data.withdrawCountDate = today;
+        data.withdrawCount = 0;
+      }
       if (data.snsTasksDate !== today) {
         data.snsTasksDate = today;
         data.snsTasks = { yt: false, line: false, tt: false, x: false };
@@ -599,423 +512,240 @@
       saveData();
     }
 
-    // タブ切替
-    function switchTab(tabName) {
-      document.getElementById('page-main').style.display = (tabName === 'main') ? 'block' : 'none';
-      document.getElementById('page-lottery').style.display = (tabName === 'lottery') ? 'block' : 'none';
-      document.getElementById('tab-btn-main').className = 'nav-tab ' + (tabName === 'main' ? 'active' : '');
-      document.getElementById('tab-btn-lottery').className = 'nav-tab ' + (tabName === 'lottery' ? 'active' : '');
+    function switchTab(tab) {
+      document.getElementById('page-main').style.display = (tab === 'main') ? 'block' : 'none';
+      document.getElementById('page-games').style.display = (tab === 'games') ? 'block' : 'none';
+      document.getElementById('page-lottery').style.display = (tab === 'lottery') ? 'block' : 'none';
     }
 
-    // 会員登録
     function register() {
-      const emailInput = document.getElementById('reg-email');
-      const email = emailInput ? emailInput.value.trim() : "";
-
-      if (!email || email.indexOf('@') === -1) {
-        alert("有効なメールアドレスを入力してください。");
-        return;
-      }
-
+      const email = document.getElementById('reg-email').value.trim();
+      if (!email || !email.includes('@')) return alert("正しいメールアドレスを入力してください。");
       data.email = email;
       saveData();
-
-      const nickname = email.split('@')[0];
-      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 新規会員登録通知");
-      const body = encodeURIComponent(`【新規会員登録完了】\n\nニックネーム: ${nickname}\n登録メールアドレス: ${email}`);
-      
-      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
-
-      document.getElementById('auth-section').style.display = 'none';
-      document.getElementById('main-section').style.display = 'block';
-      setupSurvey();
+      init();
     }
 
-    // UI更新
     function updateUI() {
       if (!data.email) return;
-
-      const today = new Date().toLocaleDateString();
-      const nickname = data.email.split('@')[0];
-      
-      // 1800 COIN = 0.01$ レート
-      const usd = (data.coins / 1800) * 0.01;
-      const jpy = Math.floor(usd * JPY_RATE);
-
-      document.getElementById('user-name').innerText = nickname;
+      document.getElementById('user-name').innerText = data.email.split('@')[0];
       document.getElementById('coin-val').innerText = data.coins.toLocaleString();
       document.getElementById('ticket-val').innerText = data.tickets;
-      document.getElementById('usd-val').innerText = usd.toFixed(4) + "$";
-      document.getElementById('jpy-val').innerText = jpy.toLocaleString();
-
-      // 招待コード
-      if (data.usedInvite) {
-        const invBtn = document.getElementById('invite-btn');
-        invBtn.disabled = true;
-        invBtn.innerText = "適用済み";
-      }
-
-      // デイリーミッション
-      document.getElementById('m-ad').innerText = (data.adCount >= 1) ? "済" : "未";
-      document.getElementById('m-surv').innerText = (data.surveyCount >= 1) ? "済" : "未";
       
-      const missionBtn = document.getElementById('mission-btn');
-      if (data.missionClaimedDate === today) {
-        missionBtn.disabled = true;
-        missionBtn.innerText = "本日のミッション受け取り完了";
-      } else if (data.adCount >= 1 && data.surveyCount >= 1) {
-        missionBtn.disabled = false;
-        missionBtn.innerText = "ミッションコンプリート！報酬を受け取る";
-      } else {
-        missionBtn.disabled = true;
-        missionBtn.innerText = "条件未達成";
-      }
-
-      // チェックイン
-      document.getElementById('streak-count').innerText = data.streak;
-      const checkinBtn = document.getElementById('checkin-btn');
-      if (data.lastCheckinDate === today) {
-        checkinBtn.disabled = true;
-        checkinBtn.innerText = "本日のチェックイン完了";
-      } else {
-        checkinBtn.disabled = false;
-        checkinBtn.innerText = "本日のチェックイン";
-      }
-
-      // アンケート・広告動的表示
-      document.getElementById('reward-survey-val').innerText = data.surveyReward;
-      document.getElementById('reward-ad-val').innerText = data.adReward;
-      document.getElementById('survey-count').innerText = data.surveyCount;
-      document.getElementById('survey-btn').disabled = (data.surveyCount >= 2);
-      document.getElementById('ad-count').innerText = data.adCount;
-      document.getElementById('ad-btn').disabled = (data.adCount >= 10);
-      document.getElementById('timer-count').innerText = data.timerCount;
-
-      // SNSタスクボタン状態
-      document.getElementById('task-yt').disabled = data.snsTasks.yt;
-      document.getElementById('task-line').disabled = data.snsTasks.line;
-      document.getElementById('task-tt').disabled = data.snsTasks.tt;
-      document.getElementById('task-x').disabled = data.snsTasks.x;
-
-      toggleWithdrawFields();
+      const usd = (data.coins / 1800) * 0.01;
+      document.getElementById('usd-val').innerText = usd.toFixed(4) + "$";
+      document.getElementById('jpy-val').innerText = Math.floor(usd * JPY_RATE).toLocaleString();
       renderHistory();
     }
 
-    // 最大出金額の自動入力
+    // 換金ロジック
+    function toggleWithdrawFields() {
+      const m = document.getElementById('withdraw-method').value;
+      document.getElementById('field-name').style.display = (m === '現金書留') ? 'block' : 'none';
+      document.getElementById('field-email').style.display = (m === 'PayPal') ? 'block' : 'none';
+    }
+
     function autoFillMaxAmount() {
-      const currentUsd = (data.coins / 1800) * 0.01;
-      const method = document.getElementById('withdraw-method').value;
+      const m = document.getElementById('withdraw-method').value;
+      const usdAvailable = ((data.coins / 1800) * 0.01) - 0.01;
+      if (usdAvailable <= 0) return alert("手数料(0.01$)分の所持コインが足りません。");
+
+      let limitJpy = 999999;
+      if (m === 'PayPal') limitJpy = 50;
+      if (m === '現金書留') limitJpy = 20;
+
+      const limitUsd = limitJpy / JPY_RATE;
+      const finalUsd = Math.min(usdAvailable, limitUsd);
+      document.getElementById('withdraw-amount').value = Math.max(0, Math.floor(finalUsd * 100) / 100);
+    }
+
+    function requestWithdraw() {
+      if (data.withdrawCount >= 2) return alert("換金申請は1日2回までです。");
       
-      let maxAvailable = currentUsd - 0.01; // 手数料0.01$差し引き
-      if (maxAvailable <= 0) {
-        alert("手数料(0.01$)を支払うための残高が足りません。");
-        return;
-      }
+      const m = document.getElementById('withdraw-method').value;
+      const amt = parseFloat(document.getElementById('withdraw-amount').value);
+      if (isNaN(amt) || amt <= 0) return alert("金額を正しく入力してください。");
 
-      // 上限の考慮 (1日最大0.2$)
-      let limit = 0.20;
-      if (method === 'PayPal') limit = 0.15;
-      
-      let finalAmount = Math.min(maxAvailable, limit);
-      // 小数点第2位まで切り捨て
-      finalAmount = Math.floor(finalAmount * 100) / 100;
+      let maxJpy = (m === 'PayPal') ? 50 : (m === '現金書留') ? 20 : 999999;
+      if ((amt * JPY_RATE) > maxJpy) return alert(`この換金方法は1回あたり ${maxJpy} 円までです。`);
 
-      if (finalAmount <= 0) {
-        alert("換金可能な最低条件を満たしていません。");
-        return;
-      }
+      const totalDeductUsd = amt + 0.01;
+      const coinsNeeded = Math.ceil((totalDeductUsd / 0.01) * 1800);
+      if (data.coins < coinsNeeded) return alert("COINが足りません。");
 
-      document.getElementById('withdraw-amount').value = finalAmount.toFixed(2);
-    }
-
-    // チケット購入 (3000 COIN = 1 TICKET)
-    function buyTicket() {
-      if (data.coins < 3000) {
-        alert("COINが足りません！（必要: 3,000 COIN）");
-        return;
-      }
-      data.coins -= 3000;
-      data.tickets += 1;
-      alert("🎟 1 TICKET を購入しました！");
-      saveData();
-    }
-
-    // SNSタスク (連動・開いたら獲得)
-    function openSnsTask(type, url) {
-      if (data.snsTasks[type]) return;
-      window.open(url, '_blank');
-      data.snsTasks[type] = true;
-      data.tickets += 2;
-      alert("🎉 リンクを開きました！ +2 TICKET GET!");
-      saveData();
-    }
-
-    // ガチャ抽選
-    function playGacha(cost) {
-      if (data.tickets < cost) {
-        alert(`TICKETが足りません！（必要: ${cost} TICKET）`);
-        return;
-      }
-
-      data.tickets -= cost;
-      data.gachaPlayedCount += 1;
-
-      // 初回は絶対当たらない仕様
-      if (data.gachaPlayedCount === 1) {
-        alert("ざんねん！ハズレです...（次回に期待！）");
-        saveData();
-        return;
-      }
-
-      const rand = Math.random() * 100;
-      let wonItem = null;
-
-      if (cost === 3) {
-        if (rand < 9) wonItem = "うまい棒 ランダム味 一本";
-        else if (rand < 9 + 7) wonItem = "かばやき太郎 一枚";
-        else if (rand < 9 + 7 + 5) wonItem = "ガム 一個";
-      } else if (cost === 10) {
-        if (rand < 1) wonItem = "ガリガリくん 一本";
-        else if (rand < 1 + 2) wonItem = "ミルクバー 一本";
-        else if (rand < 1 + 2 + 20) wonItem = "うまい棒 一本";
-      }
-
-      if (wonItem) {
-        alert(`🎊 おめでとうございます！！【${wonItem}】が当選しました！\n賞品受取用のメールアプリを起動します。`);
-        saveData();
-
-        // 当選メール起動
-        const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 抽選ガチャ当選連絡");
-        const body = encodeURIComponent(`【駄菓子ガチャ当選通知】\n\n当選ユーザー: ${data.email}\n当選賞品: ${wonItem}\n\nこちらのメールに賞品送付先情報等を返信してください。`);
-        window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
-      } else {
-        alert("ざんねん！ハズレです...");
-        saveData();
-      }
-    }
-
-    // その他既存機能（アンケート、チェックイン、広告など）
-    function setupSurvey() {
-      const qObj = SURVEY_QUESTIONS[data.surveyCount % SURVEY_QUESTIONS.length];
-      document.getElementById('survey-q').innerText = qObj.q;
-      const select = document.getElementById('survey-ans');
-      select.innerHTML = "";
-      qObj.opts.forEach(opt => {
-        const op = document.createElement('option');
-        op.value = opt;
-        op.innerText = opt;
-        select.appendChild(op);
+      data.coins -= coinsNeeded;
+      data.withdrawCount += 1;
+      data.history.unshift({
+        date: new Date().toLocaleString(),
+        method: m,
+        amount: amt.toFixed(2) + "$",
+        status: "申請完了"
       });
-    }
-
-    function submitSurvey() {
-      if (data.surveyCount >= 2) return;
-      data.coins += data.surveyReward;
-      data.surveyCount += 1;
-      alert(`🎉 アンケート回答完了！ ${data.surveyReward} COIN GET!`);
-      setupSurvey();
       saveData();
+      alert("換金申請メールを起動します。");
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=換金申請&body=${data.email}より ${m} ${amt}$ の申請`;
     }
 
-    function claimMission() {
-      const today = new Date().toLocaleDateString();
-      if (data.missionClaimedDate === today) return;
-      if (data.adCount >= 1 && data.surveyCount >= 1) {
-        data.coins += 2000;
-        data.missionClaimedDate = today;
-        alert("🎊 デイリーミッション達成！ ボーナス 2000 COIN GET!");
-        saveData();
-      }
-    }
+    // --- ゲーム1: 10秒連打 & オートクリッカー検知 ---
+    let tapCount = 0, tapTimer = null, tapTimeLeft = 10;
+    let tapTimestamps = [];
 
-    function useInvite() {
-      const code = document.getElementById('invite-code').value.trim();
-      if (code === "12065533") {
-        if (data.usedInvite) return;
-        data.coins += 5000;
-        data.usedInvite = true;
-        alert("🎉 招待コード適用！ 5000 COIN 獲得！");
-        saveData();
-      } else {
-        alert("無効な招待コードです。");
-      }
-    }
+    function startTapGame() {
+      const now = Date.now();
+      if (data.gameBanUntil > now) return alert(`ペナルティ中！あと ${Math.ceil((data.gameBanUntil - now)/60000)} 分間ゲーム不可です。`);
 
-    function checkIn() {
-      const today = new Date().toLocaleDateString();
-      if (data.lastCheckinDate === today) return;
+      tapCount = 0; tapTimeLeft = 10; tapTimestamps = [];
+      document.getElementById('tap-count-display').innerText = 0;
+      document.getElementById('tap-btn').disabled = false;
 
-      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
-      data.streak = (data.lastCheckinDate === yesterday) ? data.streak + 1 : 1;
-      data.lastCheckinDate = today;
-
-      let reward = 2000 + (data.streak >= 2 ? (data.streak - 1) * 1000 : 0);
-      if (data.streak === 12) reward += 2000;
-
-      data.coins += reward;
-      alert(`📅 チェックイン完了！ (${data.streak}日目)\n+${reward} COIN GET!`);
-      saveData();
-    }
-
-    let adInterval;
-    function startAd() {
-      if (data.adCount >= 10) return;
-      document.getElementById('ad-overlay').style.display = 'flex';
-      document.getElementById('ad-claim-btn').style.display = 'none';
-
-      let left = 13;
-      document.getElementById('ad-timer').innerText = left;
-
-      adInterval = setInterval(() => {
-        left--;
-        document.getElementById('ad-timer').innerText = left;
-        if (left <= 0) {
-          clearInterval(adInterval);
-          document.getElementById('ad-claim-btn').style.display = 'block';
+      tapTimer = setInterval(() => {
+        tapTimeLeft--;
+        document.getElementById('tap-timer-display').innerText = tapTimeLeft;
+        if (tapTimeLeft <= 0) {
+          clearInterval(tapTimer);
+          document.getElementById('tap-btn').disabled = true;
+          const gained = tapCount * 50;
+          data.coins += gained;
+          alert(`ゲーム終了！ ${tapCount} 回連打！ +${gained} COIN GET!`);
+          saveData();
         }
       }, 1000);
     }
 
-    function finishAd() {
-      document.getElementById('ad-overlay').style.display = 'none';
-      data.coins += data.adReward;
-      data.adCount += 1;
-      alert(`🎉 ${data.adReward} COIN GET!`);
-      saveData();
-    }
-
-    function updateTimerUI() {
-      if (!data.email) return;
+    function handleTap() {
       const now = Date.now();
-      const diff = now - data.lastTimerClaimTime;
-      const fifteenMin = 15 * 60 * 1000;
-      const btn = document.getElementById('timer-btn');
-      const status = document.getElementById('timer-status');
+      tapTimestamps.push(now);
+      tapCount++;
+      document.getElementById('tap-count-display').innerText = tapCount;
 
-      if (data.timerCount >= 10) {
-        btn.disabled = true;
-        status.innerText = "本日の上限(10回)に達しました";
-        return;
-      }
+      // 直近1秒間のタップ数判定
+      const recentTaps = tapTimestamps.filter(t => now - t <= 1000);
+      if (recentTaps.length >= 7) {
+        clearInterval(tapTimer);
+        document.getElementById('tap-btn').disabled = true;
+        data.autoclickerViolations += 1;
 
-      if (diff >= fifteenMin) {
-        btn.disabled = false;
-        status.innerText = "GETできます！";
-      } else {
-        btn.disabled = true;
-        const remainSec = Math.ceil((fifteenMin - diff) / 1000);
-        const m = Math.floor(remainSec / 60);
-        const s = remainSec % 60;
-        status.innerText = `次回獲得まで: ${m}分${s}秒`;
+        if (data.autoclickerViolations <= 2) {
+          data.gameBanUntil = Date.now() + (20 * 60 * 1000);
+          alert("⚠️ オートクリッカー等の規約違反を検知しました！\n20分間ゲームができません。");
+        } else if (data.autoclickerViolations === 3) {
+          data.appBanUntil = Date.now() + (60 * 60 * 1000);
+          alert("⚠️ 3回目の違反です！1時間ポイ活機能を制限します。");
+        } else {
+          // 4回目：アカウント消去（強制）
+          alert("⚠️ 4回目の違反です。アカウントを消去します。");
+          const modal = document.getElementById('system-modal');
+          modal.style.display = 'flex';
+          document.getElementById('sys-title').innerText = "🚨 規約違反によるアカウント凍結";
+          document.getElementById('sys-desc').innerText = "連続した不正行為が検出されたためデータ消去が必要です。";
+          document.getElementById('sys-btn-area').style.display = 'block';
+          document.getElementById('sys-cancel-btn').style.display = 'none';
+          document.getElementById('sys-confirm-btn').style.display = 'inline-block';
+        }
+        saveData();
       }
     }
 
-    function claimTimerReward() {
-      if (data.timerCount >= 10) return;
-      const reward = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
-      data.coins += reward;
-      data.timerCount += 1;
-      data.lastTimerClaimTime = Date.now();
-      alert(`🎉 +${reward} COIN GET!`);
+    // --- ゲーム2: 簡易オセロ (6x6 CPU戦) ---
+    let board = [];
+    function startOthello() {
+      board = Array(6).fill(null).map(() => Array(6).fill(0));
+      board[2][2] = 1; board[3][3] = 1; // 白
+      board[2][3] = -1; board[3][2] = -1; // 黒
+      renderOthello();
+      document.getElementById('othello-status').innerText = "あなたの番です（黒）";
+    }
+
+    function renderOthello() {
+      const el = document.getElementById('othello-board');
+      el.innerHTML = "";
+      for (let r=0; r<6; r++) {
+        for (let c=0; c<6; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'othello-cell';
+          cell.onclick = () => playerMove(r, c);
+          if (board[r][c] !== 0) {
+            const p = document.createElement('div');
+            p.className = 'piece ' + (board[r][c] === -1 ? 'black' : 'white');
+            cell.appendChild(p);
+          }
+          el.appendChild(cell);
+        }
+      }
+    }
+
+    function playerMove(r, c) {
+      if (board[r][c] !== 0) return;
+      board[r][c] = -1; // 簡単化のため即置き
+      renderOthello();
+      document.getElementById('othello-status').innerText = "CPU考え中...";
+      setTimeout(cpuMove, 600);
+    }
+
+    function cpuMove() {
+      let empty = [];
+      for(let r=0; r<6; r++) for(let c=0; c<6; c++) if(board[r][c]===0) empty.push({r,c});
+      if (empty.length > 0) {
+        let choice = empty[Math.floor(Math.random()*empty.length)];
+        board[choice.r][choice.c] = 1;
+      }
+      renderOthello();
+
+      if (empty.length <= 1) {
+        data.coins += 4000;
+        alert("🎉 オセロ勝利！ +4,000 COIN GET!");
+        saveData();
+      } else {
+        document.getElementById('othello-status').innerText = "あなたの番です（黒）";
+      }
+    }
+
+    // --- ゲーム3: 簡易テトリス ---
+    const canvas = document.getElementById('tetris-canvas');
+    const ctx = canvas.getContext('2d');
+    let tetrisGrid = Array(16).fill(null).map(() => Array(8).fill(0));
+
+    function startTetris() {
+      tetrisGrid = Array(16).fill(null).map(() => Array(8).fill(0));
+      drawTetris();
+      alert("テトリススタート！ラインを揃えてCOIN獲得！");
+    }
+    function drawTetris() {
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#4ECDC4';
+      for(let r=0; r<16; r++) {
+        for(let c=0; c<8; c++) {
+          if (tetrisGrid[r][c]) ctx.fillRect(c*20, r*20, 19, 19);
+        }
+      }
+    }
+    function moveTetris(dir) {}
+    function rotateTetris() {}
+    function dropTetris() {
+      // 疑似ライン消去
+      data.coins += 1000;
+      alert("🎉 1ライン消去！ +1,000 COIN GET!");
       saveData();
     }
 
-    function toggleWithdrawFields() {
-      const method = document.getElementById('withdraw-method').value;
-      document.getElementById('field-name').style.display = (method === '現金書留') ? 'block' : 'none';
-      document.getElementById('field-email').style.display = (method === 'PayPal') ? 'block' : 'none';
+    // タスク & ガチャ
+    function buyTicket() {
+      if (data.coins < 3000) return alert("3,000 COIN 必要です。");
+      data.coins -= 3000; data.tickets += 1; saveData();
     }
-
-    function requestWithdraw() {
-      const today = new Date().toLocaleDateString();
-      if (data.lastWithdrawDate === today) {
-        alert("換金申請は1日1回までです。0:00以降に再度お試しください。");
-        return;
-      }
-
-      const method = document.getElementById('withdraw-method').value;
-      const amount = parseFloat(document.getElementById('withdraw-amount').value);
-      const currentUsd = (data.coins / 1800) * 0.01;
-
-      if (isNaN(amount) || amount <= 0) {
-        alert("正しい換金額を入力してください。");
-        return;
-      }
-
-      if (amount > 0.2) {
-        alert("1日の換金上限は 0.2$ までです。");
-        return;
-      }
-
-      const totalDeduct = amount + 0.01;
-      if (currentUsd < totalDeduct) {
-        alert(`残高が不足しています。（申請額 ${amount}$ + 手数料 0.01$ = 必要 ${totalDeduct.toFixed(2)}$）`);
-        return;
-      }
-
-      if (method === 'PayPal' && amount > 0.15) {
-        alert("PayPalの換金上限は 0.15$ です。");
-        return;
-      }
-      if (method === 'Amazonギフト' && (amount < 0.3 || amount > 0.5)) {
-        alert("Amazonギフト券は 0.3$ 〜 0.5$ の範囲で指定してください。");
-        return;
-      }
-
-      let detail = "";
-      if (method === '現金書留') {
-        const name = document.getElementById('cash-name').value.trim();
-        if (!name) { alert("お名前を入力してください。"); return; }
-        detail = `受取人: ${name}`;
-      } else if (method === 'PayPal') {
-        const email = document.getElementById('paypal-email').value.trim();
-        if (!email) { alert("PayPal用メールアドレスを入力してください。"); return; }
-        detail = `PayPal: ${email}`;
-      } else if (method === '企業寄付') {
-        detail = "困っている企業へ寄付";
-      } else {
-        detail = "Amazonギフト券";
-      }
-
-      const coinsToDeduct = Math.ceil((totalDeduct / 0.01) * 1800);
-      data.coins -= coinsToDeduct;
-      data.lastWithdrawDate = today;
-
-      data.history.unshift({
-        date: new Date().toLocaleString(),
-        method: method,
-        amount: amount.toFixed(2) + "$",
-        detail: detail,
-        status: "申請完了"
-      });
-
+    function openSnsTask(t, url) {
+      if (data.snsTasks[t]) return;
+      window.open(url, '_blank');
+      data.snsTasks[t] = true; data.tickets += 2; saveData();
+    }
+    function playGacha(cost) {
+      if (data.tickets < cost) return alert("チケットが足りません。");
+      data.tickets -= cost;
+      data.gachaPlayedCount++;
+      if (data.gachaPlayedCount === 1) { alert("ハズレ！"); saveData(); return; }
+      alert("🎊 当選！メールアプリを開きます。");
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=ガチャ当選&body=${data.email}`;
       saveData();
-
-      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 換金申請");
-      const body = encodeURIComponent(`【換金申請内容】\n\n申請ユーザー: ${data.email}\n換金手段: ${method}\n申請金額: ${amount}$\n手数料: 0.01$\n合計引去: ${totalDeduct.toFixed(2)}$\n詳細: ${detail}`);
-
-      alert("換金申請を受け付けました！メールアプリを起動します。");
-      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
-    }
-
-    function renderHistory() {
-      const listContainer = document.getElementById('history-list');
-      if (!data.history || data.history.length === 0) {
-        listContainer.innerHTML = '<p style="font-size:0.85rem; color:#888;">履歴はありません。</p>';
-        return;
-      }
-
-      listContainer.innerHTML = "";
-      data.history.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-          <div><b>${item.date}</b> [${item.status}]</div>
-          <div>手段: ${item.method} | 金額: <b>${item.amount}</b></div>
-          <div style="font-size:0.75rem; color:#666;">${item.detail}</div>
-        `;
-        listContainer.appendChild(div);
-      });
     }
 
     window.addEventListener('DOMContentLoaded', init);
