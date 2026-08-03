@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ぽいんとあっぷげっと！</title>
-  <style>
+  <style id="dynamic-style">
+    /* 動的変更されるスタイル（アプデごとにランダム変動） */
     :root {
       --main: #FF6B6B;
       --accent: #4ECDC4;
@@ -12,6 +13,25 @@
       --bg: #F7F9FC;
       --card: #FFFFFF;
       --text: #2C3E50;
+      --btn-radius: 12px;
+      --anim-name: none;
+    }
+
+    @keyframes pulseAnim {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    @keyframes wiggleAnim {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(-1deg); }
+      75% { transform: rotate(1deg); }
+      100% { transform: rotate(0deg); }
+    }
+    @keyframes neonGlow {
+      0% { box-shadow: 0 0 5px var(--main); }
+      50% { box-shadow: 0 0 15px var(--accent); }
+      100% { box-shadow: 0 0 5px var(--main); }
     }
 
     body {
@@ -19,11 +39,11 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
       color: var(--text);
-      padding-bottom: 60px;
+      padding-bottom: 80px;
     }
 
     header {
-      background: linear-gradient(135deg, var(--main), #FF8E8E);
+      background: linear-gradient(135deg, var(--main), var(--accent));
       color: white;
       padding: 15px 20px;
       display: flex;
@@ -79,27 +99,30 @@
       background: var(--main);
       color: white;
       border: none;
-      padding: 12px;
-      border-radius: 10px;
+      padding: 14px;
+      border-radius: var(--btn-radius);
       font-weight: bold;
       width: 100%;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 1rem;
       transition: 0.2s;
+      animation: var(--anim-name);
     }
-    .btn:hover { opacity: 0.9; }
-    .btn:disabled { background: #ccc !important; cursor: not-allowed; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { background: #ccc !important; cursor: not-allowed; animation: none !important; }
     .btn-accent { background: var(--accent); }
     .btn-small { padding: 6px 12px; font-size: 0.8rem; width: auto; }
     .btn-danger { background: #e74c3c; }
 
     input, select {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin: 8px 0 12px;
       border: 1px solid #ddd;
       border-radius: 8px;
       box-sizing: border-box;
+      font-size: 0.95rem;
     }
 
     .history-item {
@@ -115,7 +138,7 @@
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: #1a1a1a;
+      background: rgba(10,10,10,0.95);
       color: white;
       z-index: 9999;
       padding: 30px;
@@ -129,9 +152,9 @@
     .progress-bg {
       width: 100%;
       max-width: 400px;
-      height: 20px;
+      height: 22px;
       background: #333;
-      border-radius: 10px;
+      border-radius: 11px;
       overflow: hidden;
       margin: 20px 0;
       border: 1px solid #555;
@@ -165,12 +188,12 @@
     }
     .nav-tab {
       flex: 1;
-      padding: 8px 4px;
+      padding: 10px 4px;
       text-align: center;
       background: #e0e0e0;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       cursor: pointer;
     }
     .nav-tab.active {
@@ -178,46 +201,21 @@
       color: white;
     }
 
-    /* 6x6 オセロ */
-    #othello-board {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 3px;
-      background: #004d00;
-      padding: 6px;
-      border-radius: 8px;
-      max-width: 270px;
-      margin: 10px auto;
-    }
-    .othello-cell {
-      width: 40px; height: 40px;
-      background-color: #2e8b57;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-    .piece { width: 32px; height: 32px; border-radius: 50%; }
-    .piece.black { background: #000; box-shadow: inset 0 0 4px #444; }
-    .piece.white { background: #fff; box-shadow: inset 0 0 4px #ccc; }
-
-    /* テトリス Canvas */
-    #tetris-canvas {
-      background: #111;
-      display: block;
-      margin: 10px auto;
-      border: 3px solid #444;
-      border-radius: 4px;
-    }
-
     .prize-list {
       background: #fff8e7;
       border: 1px dashed #f39c12;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 8px;
       margin: 8px 0;
       font-size: 0.85rem;
+    }
+
+    .version-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #888;
+      font-family: monospace;
     }
   </style>
 </head>
@@ -230,12 +228,12 @@
 
   <div class="container">
 
-    <!-- システムモーダル -->
+    <!-- システムモーダル（アプデ・ダウンロード用） -->
     <div id="system-modal" class="full-screen-modal">
       <h2 id="sys-title">ぽいんとあっぷげっとへようこそ！</h2>
-      <p id="sys-desc">データをバックにいんすとーるします！</p>
+      <p id="sys-desc" style="white-space: pre-line; line-height: 1.5;"></p>
       <div class="progress-bg"><div id="sys-progress" class="progress-fill"></div></div>
-      <p id="sys-status" style="font-family: monospace;">0 / 299978 KB (0%)</p>
+      <p id="sys-status" style="font-family: monospace; font-size: 1.1rem;"></p>
       <div id="sys-btn-area" style="margin-top: 15px; display:none;">
         <button class="btn btn-danger" id="sys-cancel-btn" onclick="cancelDeletion()">キャンセル</button>
         <button class="btn btn-accent" id="sys-confirm-btn" onclick="executeDeletion(true)" style="display:none;">削除を確定する（はい）</button>
@@ -247,7 +245,7 @@
       <h3>📧 無料会員登録</h3>
       <p style="font-size:0.85rem; color:#666;">メールアドレスを入力して登録！@の前がニックネームになります。</p>
       <input type="email" id="reg-email" placeholder="example@mail.com">
-      <button class="btn" id="reg-btn" onclick="register()">会員登録してはじめる</button>
+      <button class="btn" onclick="register()">会員登録してはじめる</button>
     </div>
 
     <!-- メイン画面 -->
@@ -255,8 +253,8 @@
 
       <div class="nav-tabs">
         <div class="nav-tab active" id="tab-btn-main" onclick="switchTab('main')">🏠 ホーム</div>
-        <div class="nav-tab" id="tab-btn-games" onclick="switchTab('games')">🎮 ゲーム</div>
-        <div class="nav-tab" id="tab-btn-lottery" onclick="switchTab('lottery')">🎟 抽選＆タスク</div>
+        <div class="nav-tab" id="tab-btn-games" onclick="switchTab('games')">🎮 連打ゲーム</div>
+        <div class="nav-tab" id="tab-btn-lottery" onclick="switchTab('lottery')">🎟 チケット＆ガチャ</div>
       </div>
 
       <div class="status-bar">
@@ -267,13 +265,13 @@
         </div>
       </div>
 
-      <!-- PAGE 1: ポイ活 -->
+      <!-- PAGE 1: ホーム・ポイ活 -->
       <div id="page-main">
         <div class="card">
           <h3>🎁 招待コード入力</h3>
           <p style="font-size:0.8rem; color:#666;">招待コード入力で <b>5000 COIN</b> 獲得！（1回のみ）</p>
           <input type="text" id="invite-code" placeholder="招待コードを入力">
-          <button class="btn btn-accent" id="invite-btn" onclick="useInvite()">コード適用</button>
+          <button class="btn btn-accent" onclick="useInvite()">コード適用</button>
         </div>
 
         <div class="card" style="border: 2px solid var(--accent);">
@@ -286,14 +284,14 @@
         </div>
 
         <div class="card">
-          <h3>📅 毎日チェックイン</h3>
-          <p style="font-size:0.85rem;" id="checkin-info">連続チェックイン: <b id="streak-count">0</b>日目</p>
-          <button class="btn" id="checkin-btn" onclick="checkIn()">本日のチェックイン</button>
+          <h3>📅 連続チェックイン（ボーナスシステム）</h3>
+          <p style="font-size:0.85rem;" id="checkin-info">現在の連続日数: <b id="streak-count">0</b>日目（3日連続でボーナスUP！）</p>
+          <button class="btn" id="checkin-btn" onclick="checkIn()">本日のチェックインをする</button>
         </div>
 
         <div class="card">
           <h3>📝 お天気・体感アンケート</h3>
-          <p style="font-size:0.85rem;">質問に答えて <b id="reward-survey-val">1000</b> COIN GET！（本日: <span id="survey-count">0</span>/2回）</p>
+          <p style="font-size:0.85rem;" id="survey-desc-text">質問に答えて <b id="reward-survey-val">1000</b> COIN GET！（本日: <span id="survey-count">0</span>/2回）</p>
           <div id="survey-area">
             <p id="survey-q" style="font-weight:bold; margin-bottom:8px;"></p>
             <select id="survey-ans"></select>
@@ -304,26 +302,22 @@
         <div class="card">
           <h3>📺 動画広告を観てGET</h3>
           <p style="font-size:0.85rem;">13秒の広告を観て <b id="reward-ad-val">1500</b> COIN GET！（本日: <span id="ad-count">0</span>/10回）</p>
-          <button class="btn btn-accent" id="ad-btn" onclick="startAd()">動画広告を再生 (13秒)</button>
+          <button class="btn btn-accent" onclick="startAd()">動画広告を再生 (13秒)</button>
         </div>
 
         <div class="card">
           <h3>⏱ 15分に1回の大チャンス</h3>
-          <p style="font-size:0.85rem;">1,000〜3,000 COIN が当たる！（本日: <span id="timer-count">0</span>/10回）</p>
+          <p style="font-size:0.85rem;">1,500 COIN が当たる！（本日: <span id="timer-count">0</span>/10回）</p>
           <p id="timer-status" style="font-weight:bold; color:var(--main);"></p>
-          <button class="btn" id="timer-btn" onclick="claimTimerReward()">15分報酬をGET</button>
+          <button class="btn" onclick="claimTimerReward()">15分報酬をGET</button>
         </div>
 
         <div class="card">
           <h3>💰 換金申請 (1800 COIN = 0.01$)</h3>
-          <p style="font-size:0.8rem; color:#d63031;">
-            【ルール】1日2回まで申請可能（手数料: 0.01$）<br>
-            ・PayPal: 50円まで / 現金: 20円まで / 寄付: 制限なし
-          </p>
           <label>換金手段:</label>
           <select id="withdraw-method" onchange="toggleWithdrawFields()">
-            <option value="PayPal">PayPal (上限 50円 / 約0.32$)</option>
-            <option value="現金書留">現金書留 (上限 20円 / 約0.13$)</option>
+            <option value="PayPal">PayPal (上限 50円)</option>
+            <option value="現金書留">現金書留 (上限 20円)</option>
             <option value="企業寄付">困っている企業に寄付 (制限なし)</option>
           </select>
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -331,14 +325,8 @@
             <button class="btn btn-small btn-accent" onclick="autoFillMaxAmount()">最大を入力</button>
           </div>
           <input type="number" id="withdraw-amount" step="0.01" placeholder="例: 0.10">
-          <div id="field-name" style="display:none;">
-            <label>お名前 (現金書留用):</label>
-            <input type="text" id="cash-name" placeholder="山田 太郎">
-          </div>
-          <div id="field-email">
-            <label>PayPalメールアドレス:</label>
-            <input type="email" id="paypal-email" placeholder="paypal@example.com">
-          </div>
+          <div id="field-name" style="display:none;"><label>お名前:</label><input type="text" id="cash-name" placeholder="山田 太郎"></div>
+          <div id="field-email"><label>PayPalメールアドレス:</label><input type="email" id="paypal-email" placeholder="paypal@example.com"></div>
           <button class="btn btn-accent" id="withdraw-submit-btn" onclick="requestWithdraw()">換金申請メールを送る</button>
         </div>
 
@@ -348,45 +336,21 @@
         </div>
       </div>
 
-      <!-- PAGE 2: ゲーム -->
+      <!-- PAGE 2: ゲーム（連打のみ） -->
       <div id="page-games" style="display:none;">
-        <!-- 6x6 正式オセロ -->
         <div class="card">
-          <h3>⚪️⚫️ 簡易オセロ (勝利で 4,000 COIN)</h3>
-          <p style="font-size:0.8rem; color:#666;">あなたは黒（⚪️CPU）。相手の石を挟んでひっくり返そう！</p>
-          <div id="othello-status" style="font-weight:bold; text-align:center;">[対局スタート] を押してください</div>
-          <div id="othello-board"></div>
-          <button class="btn" onclick="startOthello()">対局スタート</button>
-        </div>
-
-        <!-- 連打（14 CPS検知） -->
-        <div class="card">
-          <h3>⚡️ 10秒連打チャレンジ</h3>
-          <p style="font-size:0.8rem; color:#666;">1タップ = 50 COIN！（⚠️1秒に14回以上のタップで不正検知）</p>
-          <div style="text-align:center; margin:10px 0;">
-            <span style="font-size:1.5rem; font-weight:bold;" id="tap-count-display">0</span> 回
-            | 残り <span id="tap-timer-display">10</span> 秒
+          <h3>⚡️ 10秒連打チャレンジ（14 CPS検知つき）</h3>
+          <p style="font-size:0.8rem; color:#666;">1タップ = 50 COIN！⚠️ 1秒に14回（14 CPS）以上の連打は自動検知されます。</p>
+          <div style="text-align:center; margin:15px 0;">
+            <span style="font-size:2rem; font-weight:bold;" id="tap-count-display">0</span> 回<br>
+            残り時間: <span id="tap-timer-display" style="font-weight:bold; color:var(--main);">10</span> 秒
           </div>
-          <button class="btn btn-accent" id="tap-btn" onclick="handleTap()" disabled>連打ボタン</button>
-          <button class="btn" style="margin-top:8px; background:#34495e;" onclick="startTapGame()">連打ゲームスタート</button>
-        </div>
-
-        <!-- 完全動作テトリス -->
-        <div class="card">
-          <h3>🧩 簡易テトリス</h3>
-          <p style="font-size:0.8rem; color:#666;">1ライン消すごとに 1,000 COIN！（矢印キーでも操作可能）</p>
-          <canvas id="tetris-canvas" width="200" height="320"></canvas>
-          <div style="display:flex; gap:5px; margin-top:5px;">
-            <button class="btn" onclick="playerMoveTetris(-1)">◀️ 左</button>
-            <button class="btn" onclick="playerRotateTetris()">🔄 回転</button>
-            <button class="btn" onclick="playerMoveTetris(1)">▶️ 右</button>
-            <button class="btn btn-accent" onclick="playerDropTetris()">⬇️ 落下</button>
-          </div>
-          <button class="btn" style="margin-top:8px; background:#27ae60;" onclick="startTetris()">ゲームスタート</button>
+          <button class="btn btn-accent" id="tap-btn" onclick="handleTap()" disabled>連打する！</button>
+          <button class="btn" style="margin-top:10px;" onclick="startTapGame()">ゲームスタート</button>
         </div>
       </div>
 
-      <!-- PAGE 3: 抽選タスク -->
+      <!-- PAGE 3: チケット＆ガチャ -->
       <div id="page-lottery" style="display:none;">
         <div class="card" style="background: #E8F8F5;">
           <h3>🎟 チケットショップ</h3>
@@ -396,39 +360,38 @@
 
         <div class="card">
           <h3>🔗 SNS訪問タスク (1日各1回 / 各2 TICKET)</h3>
-          <button class="btn" style="background:#FF0000; margin-bottom:8px;" id="task-yt" onclick="openSnsTask('yt', 'https://youtube.com')">▶️ YouTubeを開く (+2 TICKET)</button>
-          <button class="btn" style="background:#06C755; margin-bottom:8px;" id="task-line" onclick="openSnsTask('line', 'https://line.me')">💬 LINEを開く (+2 TICKET)</button>
-          <button class="btn" style="background:#000000; margin-bottom:8px;" id="task-tt" onclick="openSnsTask('tt', 'https://tiktok.com')">🎵 TikTokを開く (+2 TICKET)</button>
-          <button class="btn" style="background:#1DA1F2; margin-bottom:8px;" id="task-x" onclick="openSnsTask('x', 'https://x.com')">🐦 Xを開く (+2 TICKET)</button>
+          <button class="btn" style="background:#FF0000; margin-bottom:8px;" onclick="openSnsTask('yt', 'https://youtube.com')">▶️ YouTubeを開く (+2 TICKET)</button>
+          <button class="btn" style="background:#06C755; margin-bottom:8px;" onclick="openSnsTask('line', 'https://line.me')">💬 LINEを開く (+2 TICKET)</button>
+          <button class="btn" style="background:#000000; margin-bottom:8px;" onclick="openSnsTask('tt', 'https://tiktok.com')">🎵 TikTokを開く (+2 TICKET)</button>
+          <button class="btn" style="background:#1DA1F2; margin-bottom:8px;" onclick="openSnsTask('x', 'https://x.com')">🐦 Xを開く (+2 TICKET)</button>
         </div>
 
         <div class="card">
           <h3>🎰 駄菓子リアル抽選ガチャ</h3>
 
           <div style="border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:12px;">
-            <h4>🎲 3 TICKET ガチャ</h4>
+            <h4>🎲 3 TICKET ガチャ（通常）</h4>
             <div class="prize-list">
               <b>【当選景品一覧】</b><br>
-              ・うまい棒 各種（当選率 9%）<br>
-              ・蒲焼さん太郎（当選率 7%）<br>
-              ・チロルチョコ（当選率 5%）
+              ・うまい棒 各種（当選率 1%）<br>
+              ・蒲焼さん太郎（当選率 0.7%）
             </div>
             <button class="btn btn-accent" onclick="playGacha(3)">3 TICKET で引く</button>
           </div>
 
           <div style="border:1px solid #ddd; padding:12px; border-radius:8px;">
-            <h4>🎰 10 TICKET プレミアムガチャ</h4>
-            <div class="prize-list">
+            <h4>🎰 10 TICKET プレミアムガチャ（当選率10倍！）</h4>
+            <div class="prize-list" style="background: #e8f8f5; border-color: var(--accent);">
               <b>【当選景品一覧】</b><br>
-              ・ガリガリくん ソーダ味（当選率 1%）<br>
-              ・ホームランバー（当選率 2%）<br>
-              ・うまい棒 15本セット（当選率 20%）
+              ・うまい棒 各種（<b>当選率 10%</b> ✨通常の10倍）<br>
+              ・蒲焼さん太郎（<b>当選率 7%</b> ✨通常の10倍）
             </div>
-            <button class="btn" style="background:#f39c12;" onclick="playGacha(10)">10 TICKET で引く</button>
+            <button class="btn" style="background:#f39c12;" onclick="playGacha(10)">10 TICKET でプレミアムを引く</button>
           </div>
         </div>
       </div>
 
+      <div class="version-footer" id="version-display">Version 5.0.0</div>
     </div>
   </div>
 
@@ -447,79 +410,118 @@
     const JPY_RATE = 155;
 
     let data = {
-      isInstalled: false, version: 1, lastUpdateCheckTime: Date.now(),
+      isInstalled: false, version: 500, lastUpdateCheckTime: Date.now(),
       email: "", coins: 0, tickets: 0, usedInvite: false, lastCheckinDate: "", streak: 0,
       withdrawCountDate: "", withdrawCount: 0, adCountDate: "", adCount: 0,
       timerCountDate: "", timerCount: 0, surveyCountDate: "", surveyCount: 0,
       missionClaimedDate: "", lastTimerClaimTime: 0, autoclickerViolations: 0,
       gameBanUntil: 0, appBanUntil: 0, gachaPlayedCount: 0, history: [],
       snsTasksDate: "", snsTasks: { yt: false, line: false, tt: false, x: false },
-      surveyReward: 1000, adReward: 1500
+      themePalette: 0
     };
 
     let deleteTimer = null;
 
+    // パレットパターン
+    const PALETTES = [
+      { main: "#FF6B6B", accent: "#4ECDC4", yellow: "#FFE66D", radius: "12px", anim: "pulseAnim 2s infinite" },
+      { main: "#6C5CE7", accent: "#00CEC9", yellow: "#FDCB6E", radius: "20px", anim: "wiggleAnim 1.5s infinite" },
+      { main: "#E17055", accent: "#0984E3", yellow: "#FFEaa7", radius: "8px", anim: "neonGlow 2s infinite" },
+      { main: "#00B894", accent: "#D63031", yellow: "#FAB1A0", radius: "16px", anim: "none" }
+    ];
+
+    function applyTheme() {
+      const p = PALETTES[data.themePalette % PALETTES.length];
+      const root = document.documentElement;
+      root.style.setProperty('--main', p.main);
+      root.style.setProperty('--accent', p.accent);
+      root.style.setProperty('--yellow', p.yellow);
+      root.style.setProperty('--btn-radius', p.radius);
+      root.style.setProperty('--anim-name', p.anim);
+    }
+
     function init() {
-      const saved = localStorage.getItem('point_up_get_data');
+      const saved = localStorage.getItem('point_up_get_data_v5');
       if (saved) data = Object.assign(data, JSON.parse(saved));
+
+      applyTheme();
 
       if (!data.isInstalled) { runInstaller(); return; }
 
-      checkVersionUpdates(() => {
-        checkBans(); checkDateReset();
-        if (data.email) {
-          document.getElementById('auth-section').style.display = 'none';
-          document.getElementById('main-section').style.display = 'block';
-          setupSurvey();
-        } else {
-          document.getElementById('auth-section').style.display = 'block';
-          document.getElementById('main-section').style.display = 'none';
-        }
-        updateUI();
-        setInterval(updateTimerUI, 1000);
-      });
+      // 5秒ごとにバックグラウンドで最新Versionを確認するロジック
+      setInterval(checkBackgroundUpdate, 5000);
+
+      checkBans(); checkDateReset();
+      if (data.email) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('main-section').style.display = 'block';
+        setupSurvey();
+      } else {
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('main-section').style.display = 'none';
+      }
+      updateUI();
+      setInterval(updateTimerUI, 1000);
     }
 
-    function saveData() { localStorage.setItem('point_up_get_data', JSON.stringify(data)); updateUI(); }
+    function saveData() { localStorage.setItem('point_up_get_data_v5', JSON.stringify(data)); updateUI(); }
 
     function runInstaller() {
       const modal = document.getElementById('system-modal'); modal.style.display = 'flex';
-      let loaded = 0; const total = 299978;
+      let loaded = 0; const total = 1048576; // 1MBガチダウンロード
       const interval = setInterval(() => {
-        loaded += 15000;
+        loaded += 104857;
         if (loaded >= total) {
           loaded = total; clearInterval(interval);
-          data.isInstalled = true; data.lastUpdateCheckTime = Date.now(); saveData();
+          data.isInstalled = true; data.version = 500; saveData();
           setTimeout(() => { modal.style.display = 'none'; document.getElementById('auth-section').style.display = 'block'; }, 500);
         }
         const pct = Math.floor((loaded / total) * 100);
+        document.getElementById('sys-title').innerText = "初期セットアップ中...";
+        document.getElementById('sys-desc').innerText = "ローカルストレージへ1MBのコアファイルを展開しています";
         document.getElementById('sys-progress').style.width = pct + "%";
         document.getElementById('sys-status').innerText = `${loaded.toLocaleString()} / ${total.toLocaleString()} KB (${pct}%)`;
       }, 100);
     }
 
-    function checkVersionUpdates(callback) {
+    // 5秒ごとにチェックするアプデロジック
+    function checkBackgroundUpdate() {
+      // 模擬的に時々ランダムで新アプデを発生させる（または自動進行）
       const now = Date.now();
-      const elapsed = now - (data.lastUpdateCheckTime || now);
-      const missed = Math.floor(elapsed / (2 * 60 * 60 * 1000));
-      if (missed > 0) {
-        const modal = document.getElementById('system-modal'); modal.style.display = 'flex';
-        const newVer = data.version + missed; const totalKb = missed * 35827;
-        document.getElementById('sys-title').innerText = `Version ${newVer} のアップデートが来ています！`;
-        document.getElementById('sys-desc').innerText = `内容：モデルの変更・バグの修正 (${missed}回分のアプデ)`;
-        let loaded = 0;
-        const interval = setInterval(() => {
-          loaded += Math.floor(totalKb / 20) + 1000;
-          if (loaded >= totalKb) {
-            loaded = totalKb; clearInterval(interval);
-            data.version = newVer; data.lastUpdateCheckTime = now; saveData();
-            setTimeout(() => { modal.style.display = 'none'; callback(); }, 500);
-          }
-          const pct = Math.floor((loaded / totalKb) * 100);
-          document.getElementById('sys-progress').style.width = pct + "%";
-          document.getElementById('sys-status').innerText = `${loaded.toLocaleString()} / ${totalKb.toLocaleString()} KB (${pct}%)`;
-        }, 100);
-      } else callback();
+      if (!data.lastAutoUpdateCheck) data.lastAutoUpdateCheck = now;
+      
+      // 1分に1回くらいの確率、またはバージョンアップ通知のシミュレーション
+      if (now - data.lastAutoUpdateCheck > 60000) {
+        data.lastAutoUpdateCheck = now;
+        triggerUpdateSequence("Version 5.1.0 がリリースされました！\n【機能追加】報酬にタップで1000COIN追加されました！");
+      }
+    }
+
+    function triggerUpdateSequence(customMsg) {
+      const modal = document.getElementById('system-modal'); modal.style.display = 'flex';
+      document.getElementById('sys-title').innerText = "⚠️ バグの修正を行いました！";
+      document.getElementById('sys-desc').innerText = `${customMsg}\n修正の為、サイトのリロードを行います。`;
+      document.getElementById('sys-btn-area').style.display = 'none';
+
+      let sec = 10;
+      let loaded = 0;
+      const total = 1048576; // 1MB
+      
+      const countdownInterval = setInterval(() => {
+        sec--;
+        loaded += Math.floor(total / 10);
+        const pct = Math.floor(((10 - sec) / 10) * 100);
+        document.getElementById('sys-progress').style.width = pct + "%";
+        document.getElementById('sys-status').innerText = `更新中... あと ${sec} 秒 (${pct}%)`;
+
+        if (sec <= 0) {
+          clearInterval(countdownInterval);
+          data.version += 1;
+          data.themePalette += 1; // アプデごとにボタンの色やアニメーションがランダム変化！
+          saveData();
+          location.reload();
+        }
+      }, 1000);
     }
 
     function openDeleteModal() {
@@ -554,7 +556,7 @@
       }, 1000);
     }
 
-    function executeDeletion() { localStorage.removeItem('point_up_get_data'); location.reload(); }
+    function executeDeletion() { localStorage.removeItem('point_up_get_data_v5'); location.reload(); }
     function checkBans() {
       const now = Date.now();
       if (data.appBanUntil > now) {
@@ -607,6 +609,21 @@
       document.getElementById('survey-count').innerText = data.surveyCount;
       document.getElementById('ad-count').innerText = data.adCount;
       document.getElementById('timer-count').innerText = data.timerCount;
+
+      // アンケート終了表示の切り替え
+      if (data.surveyCount >= 2) {
+        document.getElementById('survey-desc-text').innerHTML = "<b style='color:#e74c3c;'>今日のアンケートはおわりです！</b>また明日お越しください。";
+        document.getElementById('survey-area').style.display = 'none';
+      } else {
+        document.getElementById('survey-area').style.display = 'block';
+      }
+
+      // バージョン表記の更新 (例: 5.0.0)
+      const major = Math.floor(data.version / 100);
+      const minor = Math.floor((data.version % 100) / 10);
+      const patch = data.version % 10;
+      document.getElementById('version-display').innerText = `Version ${major}.${minor}.${patch}`;
+
       toggleWithdrawFields(); renderHistory();
     }
 
@@ -617,12 +634,24 @@
         data.coins += 5000; data.usedInvite = true; alert("🎉 5,000 COIN 獲得！"); saveData();
       } else alert("無効なコードです。");
     }
+
     function checkIn() {
       const today = new Date().toLocaleDateString();
       if (data.lastCheckinDate === today) return;
       data.streak += 1; data.lastCheckinDate = today;
-      data.coins += 2000; alert(`📅 チェックイン完了！ +2000 COIN`); saveData();
+      
+      // 3日連続でボーナスUP
+      let bonus = 2000;
+      if (data.streak >= 3) {
+        bonus = 5000;
+        alert(`🌟 3日連続ボーナス発動！ 通常より多い +5,000 COIN GET!`);
+      } else {
+        alert(`📅 チェックイン完了！ +2,000 COIN`);
+      }
+      data.coins += bonus;
+      saveData();
     }
+
     function setupSurvey() {
       document.getElementById('survey-q').innerText = "今日の調子はどうですか？";
       const sel = document.getElementById('survey-ans'); sel.innerHTML = "<option>最高！</option><option>普通</option>";
@@ -656,9 +685,16 @@
       const diff = Date.now() - data.lastTimerClaimTime;
       const status = document.getElementById('timer-status');
       if (diff >= 15 * 60 * 1000) status.innerText = "GETできます！";
-      else status.innerText = `待機中...`;
+      else {
+        const rem = Math.ceil((15 * 60 * 1000 - diff) / 1000);
+        const m = Math.floor(rem / 60);
+        const s = rem % 60;
+        status.innerText = `待機中... あと ${m}分${s}秒`;
+      }
     }
     function claimTimerReward() {
+      const diff = Date.now() - data.lastTimerClaimTime;
+      if (diff < 15 * 60 * 1000) return alert("まだ時間が経過していません！");
       data.coins += 1500; data.timerCount += 1; data.lastTimerClaimTime = Date.now(); alert("🎉 +1500 COIN GET!"); saveData();
     }
 
@@ -707,238 +743,20 @@
     function handleTap() {
       const now = Date.now(); tapTimestamps.push(now); tapCount++;
       document.getElementById('tap-count-display').innerText = tapCount;
-      // 1秒間のタップ数判定（14回以上で検知）
       const recentTaps = tapTimestamps.filter(t => now - t <= 1000);
       if (recentTaps.length >= 14) {
         clearInterval(tapTimer); document.getElementById('tap-btn').disabled = true;
         data.autoclickerViolations += 1;
         if (data.autoclickerViolations <= 2) {
-          data.gameBanUntil = Date.now() + (20 * 60 * 1000); alert("⚠️ オートクリッカー（14 CPS以上）を検知！20分間ゲーム制限。");
-        } else if (data.autoclickerViolations === 3) {
-          data.appBanUntil = Date.now() + (60 * 60 * 1000); alert("⚠️ 3回目の違反！1時間ポイ活制限。");
+          data.gameBanUntil = Date.now() + (20 * 60 * 1000); alert("⚠️ オートクリッカー（14 CPS以上）を検知！20分間制限。");
         } else {
-          alert("⚠️ 4回目の違反。アカウント自動消去。"); executeDeletion();
+          alert("⚠️ 複数回の違反。アカウントデータリセット。"); executeDeletion();
         }
         saveData();
       }
     }
 
-    // --- 6x6 正規オセロロジック ---
-    let oboard = [];
-    const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-
-    function startOthello() {
-      oboard = Array(6).fill(null).map(() => Array(6).fill(0));
-      oboard[2][2] = 1; oboard[3][3] = 1; // 白
-      oboard[2][3] = -1; oboard[3][2] = -1; // 黒
-      renderOthello();
-      document.getElementById('othello-status').innerText = "あなたの番です（黒）";
-    }
-
-    function renderOthello() {
-      const el = document.getElementById('othello-board'); el.innerHTML = "";
-      for (let r=0; r<6; r++) {
-        for (let c=0; c<6; c++) {
-          const cell = document.createElement('div'); cell.className = 'othello-cell';
-          cell.onclick = () => playerOthelloMove(r, c);
-          if (oboard[r][c] !== 0) {
-            const p = document.createElement('div');
-            p.className = 'piece ' + (oboard[r][c] === -1 ? 'black' : 'white');
-            cell.appendChild(p);
-          }
-          el.appendChild(cell);
-        }
-      }
-    }
-
-    function getFlips(r, c, color) {
-      if (oboard[r][c] !== 0) return [];
-      let totalFlips = [];
-      DIRS.forEach(([dr, dc]) => {
-        let nr = r + dr, nc = c + dc;
-        let path = [];
-        while (nr >= 0 && nr < 6 && nc >= 0 && nc < 6 && oboard[nr][nc] === -color) {
-          path.push([nr, nc]); nr += dr; nc += dc;
-        }
-        if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6 && oboard[nr][nc] === color) {
-          totalFlips = totalFlips.concat(path);
-        }
-      });
-      return totalFlips;
-    }
-
-    function playerOthelloMove(r, c) {
-      const flips = getFlips(r, c, -1);
-      if (flips.length === 0) return alert("そこには置けません（相手の石を挟める場所に置いてください）");
-      oboard[r][c] = -1;
-      flips.forEach(([fr, fc]) => oboard[fr][fc] = -1);
-      renderOthello();
-      document.getElementById('othello-status').innerText = "CPU思考中...";
-      setTimeout(cpuOthelloMove, 600);
-    }
-
-    function cpuOthelloMove() {
-      let validMoves = [];
-      for(let r=0; r<6; r++) {
-        for(let c=0; c<6; c++) {
-          const flips = getFlips(r, c, 1);
-          if (flips.length > 0) validMoves.push({r, c, flips});
-        }
-      }
-      if (validMoves.length > 0) {
-        const move = validMoves[Math.floor(Math.random() * validMoves.length)];
-        oboard[move.r][move.c] = 1;
-        move.flips.forEach(([fr, fc]) => oboard[fr][fc] = 1);
-      }
-      renderOthello();
-      checkOthelloEnd();
-    }
-
-    function checkOthelloEnd() {
-      let black = 0, white = 0, empty = 0;
-      for(let r=0; r<6; r++) for(let c=0; c<6; c++) {
-        if (oboard[r][c] === -1) black++;
-        else if (oboard[r][c] === 1) white++;
-        else empty++;
-      }
-      if (empty === 0 || (getFlipsCount(-1) === 0 && getFlipsCount(1) === 0)) {
-        if (black > white) {
-          data.coins += 4000; alert(`🎉 勝利！(黒:${black} vs 白:${white}) +4,000 COIN GET!`); saveData();
-        } else {
-          alert(`負け... (黒:${black} vs 白:${white})`);
-        }
-      } else {
-        document.getElementById('othello-status').innerText = `あなたの番（黒:${black} vs 白:${white}）`;
-      }
-    }
-    function getFlipsCount(color) {
-      let cnt = 0;
-      for(let r=0; r<6; r++) for(let c=0; c<6; c++) cnt += getFlips(r,c,color).length;
-      return cnt;
-    }
-
-    // --- 完全動作テトリス (Mac/Canvas描画対応) ---
-    const tCanvas = document.getElementById('tetris-canvas');
-    const tCtx = tCanvas.getContext('2d');
-    const BOARD_W = 10, BOARD_H = 16, BLOCK_SIZE = 20;
-    let tBoard = Array(BOARD_H).fill(null).map(() => Array(BOARD_W).fill(0));
-    let currentPiece = null;
-
-    const PIECES = [
-      [[1,1,1,1]], // I
-      [[1,1],[1,1]], // O
-      [[0,1,0],[1,1,1]], // T
-      [[1,0,0],[1,1,1]], // L
-      [[0,0,1],[1,1,1]]  // J
-    ];
-
-    function startTetris() {
-      tBoard = Array(BOARD_H).fill(null).map(() => Array(BOARD_W).fill(0));
-      spawnTetrisPiece();
-      drawTetris();
-    }
-
-    function spawnTetrisPiece() {
-      const shape = PIECES[Math.floor(Math.random() * PIECES.length)];
-      currentPiece = { shape, r: 0, c: 3 };
-    }
-
-    function drawTetris() {
-      tCtx.fillStyle = '#111'; tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
-      // 盤面
-      for(let r=0; r<BOARD_H; r++) {
-        for(let c=0; c<BOARD_W; c++) {
-          if (tBoard[r][c]) {
-            tCtx.fillStyle = '#4ECDC4';
-            tCtx.fillRect(c*BLOCK_SIZE, r*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
-          }
-        }
-      }
-      // 落下中ブロック
-      if (currentPiece) {
-        tCtx.fillStyle = '#FFE66D';
-        currentPiece.shape.forEach((row, dr) => {
-          row.forEach((val, dc) => {
-            if (val) {
-              tCtx.fillRect((currentPiece.c + dc)*BLOCK_SIZE, (currentPiece.r + dr)*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
-            }
-          });
-        });
-      }
-    }
-
-    function playerMoveTetris(dir) {
-      if (!currentPiece) return;
-      currentPiece.c += dir;
-      if (checkCollision()) currentPiece.c -= dir;
-      drawTetris();
-    }
-
-    function playerRotateTetris() {
-      if (!currentPiece) return;
-      const oldShape = currentPiece.shape;
-      currentPiece.shape = oldShape[0].map((_, i) => oldShape.map(row => row[i]).reverse());
-      if (checkCollision()) currentPiece.shape = oldShape;
-      drawTetris();
-    }
-
-    function playerDropTetris() {
-      if (!currentPiece) return;
-      currentPiece.r++;
-      if (checkCollision()) {
-        currentPiece.r--;
-        mergePiece();
-        clearLines();
-        spawnTetrisPiece();
-      }
-      drawTetris();
-    }
-
-    function checkCollision() {
-      for(let dr=0; dr<currentPiece.shape.length; dr++) {
-        for(let dc=0; dc<currentPiece.shape[dr].length; dc++) {
-          if (currentPiece.shape[dr][dc]) {
-            let nr = currentPiece.r + dr, nc = currentPiece.c + dc;
-            if (nr < 0 || nr >= BOARD_H || nc < 0 || nc >= BOARD_W || tBoard[nr][nc]) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function mergePiece() {
-      currentPiece.shape.forEach((row, dr) => {
-        row.forEach((val, dc) => {
-          if (val) tBoard[currentPiece.r + dr][currentPiece.c + dc] = 1;
-        });
-      });
-    }
-
-    function clearLines() {
-      let lines = 0;
-      for(let r=BOARD_H-1; r>=0; r--) {
-        if (tBoard[r].every(v => v === 1)) {
-          tBoard.splice(r, 1);
-          tBoard.unshift(Array(BOARD_W).fill(0));
-          lines++; r++;
-        }
-      }
-      if (lines > 0) {
-        const reward = lines * 1000;
-        data.coins += reward; alert(`🎉 ${lines}ライン消去！ +${reward} COIN GET!`); saveData();
-      }
-    }
-
-    // キーボード操作
-    window.addEventListener('keydown', (e) => {
-      if (document.getElementById('page-games').style.display === 'none') return;
-      if (e.key === 'ArrowLeft') playerMoveTetris(-1);
-      if (e.key === 'ArrowRight') playerMoveTetris(1);
-      if (e.key === 'ArrowUp') playerRotateTetris();
-      if (e.key === 'ArrowDown') playerDropTetris();
-    });
-
-    // 抽選ガチャ
+    // --- チケット＆ガチャ ---
     function buyTicket() {
       if (data.coins < 3000) return alert("3,000 COIN 必要です。");
       data.coins -= 3000; data.tickets += 1; saveData();
@@ -950,9 +768,20 @@
     function playGacha(cost) {
       if (data.tickets < cost) return alert("チケットが足りません。");
       data.tickets -= cost; data.gachaPlayedCount++;
-      if (data.gachaPlayedCount === 1) { alert("ざんねん！ハズレです..."); saveData(); return; }
-      const item = (cost === 3) ? "うまい棒" : "ガリガリくん";
-      alert(`🎊 当選！【${item}】を獲得しました！メールアプリを開きます。`);
+      
+      // プレミアムチケットは当選率10倍
+      let winRate = (cost === 10) ? 0.10 : 0.01;
+      let won = Math.random() < winRate;
+
+      if (!won) {
+        alert("ざんねん！ハズレです..."); 
+        saveData(); 
+        return;
+      }
+      
+      const item = "うまい棒";
+      const badge = (cost === 10) ? "【プレミアム10倍当選！】" : "【当選！】";
+      alert(`🎊 ${badge} ${item} を獲得しました！メールアプリを開きます。`);
       window.location.href = `mailto:${ADMIN_EMAIL}?subject=ガチャ当選(${item})&body=${data.email}`;
       saveData();
     }
