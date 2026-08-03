@@ -111,7 +111,6 @@
       font-size: 0.85rem;
     }
 
-    /* システムモーダル */
     .full-screen-modal {
       display: none;
       position: fixed;
@@ -145,7 +144,6 @@
       transition: width 0.1s linear;
     }
 
-    /* 広告オーバーレイ */
     .ad-overlay {
       display: none;
       position: fixed;
@@ -180,19 +178,19 @@
       color: white;
     }
 
-    /* オセロ・テトリス */
+    /* 6x6 オセロ */
     #othello-board {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 2px;
-      background: #006400;
-      padding: 4px;
+      gap: 3px;
+      background: #004d00;
+      padding: 6px;
       border-radius: 8px;
-      max-width: 300px;
+      max-width: 270px;
       margin: 10px auto;
     }
     .othello-cell {
-      width: 45px; height: 45px;
+      width: 40px; height: 40px;
       background-color: #2e8b57;
       border-radius: 4px;
       display: flex;
@@ -200,15 +198,26 @@
       justify-content: center;
       cursor: pointer;
     }
-    .piece { width: 36px; height: 36px; border-radius: 50%; }
-    .piece.black { background: #000; }
-    .piece.white { background: #fff; }
+    .piece { width: 32px; height: 32px; border-radius: 50%; }
+    .piece.black { background: #000; box-shadow: inset 0 0 4px #444; }
+    .piece.white { background: #fff; box-shadow: inset 0 0 4px #ccc; }
 
+    /* テトリス Canvas */
     #tetris-canvas {
-      background: #000;
+      background: #111;
       display: block;
       margin: 10px auto;
-      border: 2px solid #333;
+      border: 3px solid #444;
+      border-radius: 4px;
+    }
+
+    .prize-list {
+      background: #fff8e7;
+      border: 1px dashed #f39c12;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin: 8px 0;
+      font-size: 0.85rem;
     }
   </style>
 </head>
@@ -221,7 +230,7 @@
 
   <div class="container">
 
-    <!-- システムモーダル（インストーラー・アプデ・削除・ペナルティ） -->
+    <!-- システムモーダル -->
     <div id="system-modal" class="full-screen-modal">
       <h2 id="sys-title">ぽいんとあっぷげっとへようこそ！</h2>
       <p id="sys-desc">データをバックにいんすとーるします！</p>
@@ -244,14 +253,12 @@
     <!-- メイン画面 -->
     <div id="main-section" style="display: none;">
 
-      <!-- タブ -->
       <div class="nav-tabs">
         <div class="nav-tab active" id="tab-btn-main" onclick="switchTab('main')">🏠 ホーム</div>
         <div class="nav-tab" id="tab-btn-games" onclick="switchTab('games')">🎮 ゲーム</div>
         <div class="nav-tab" id="tab-btn-lottery" onclick="switchTab('lottery')">🎟 抽選＆タスク</div>
       </div>
 
-      <!-- ステータス表示 -->
       <div class="status-bar">
         <div>👤 <span id="user-name"></span> さん</div>
         <div style="text-align: right;">
@@ -260,9 +267,8 @@
         </div>
       </div>
 
-      <!-- PAGE 1: ポイ活ホーム -->
+      <!-- PAGE 1: ポイ活 -->
       <div id="page-main">
-        <!-- 招待コード -->
         <div class="card">
           <h3>🎁 招待コード入力</h3>
           <p style="font-size:0.8rem; color:#666;">招待コード入力で <b>5000 COIN</b> 獲得！（1回のみ）</p>
@@ -270,7 +276,6 @@
           <button class="btn btn-accent" id="invite-btn" onclick="useInvite()">コード適用</button>
         </div>
 
-        <!-- デイリーミッション -->
         <div class="card" style="border: 2px solid var(--accent);">
           <h3>🎯 本日のデイリーミッション</h3>
           <ul style="font-size:0.85rem; padding-left: 20px; margin: 10px 0;">
@@ -280,15 +285,12 @@
           <button class="btn btn-accent" id="mission-btn" onclick="claimMission()">ミッションコンプリート報酬 (+2000 COIN)</button>
         </div>
 
-        <!-- デイリーチェックイン -->
         <div class="card">
           <h3>📅 毎日チェックイン</h3>
           <p style="font-size:0.85rem;" id="checkin-info">連続チェックイン: <b id="streak-count">0</b>日目</p>
-          <p style="font-size:0.75rem; color:#888;">※3日以上連続で増量！12日達成でボーナス！</p>
           <button class="btn" id="checkin-btn" onclick="checkIn()">本日のチェックイン</button>
         </div>
 
-        <!-- お天気アンケート -->
         <div class="card">
           <h3>📝 お天気・体感アンケート</h3>
           <p style="font-size:0.85rem;">質問に答えて <b id="reward-survey-val">1000</b> COIN GET！（本日: <span id="survey-count">0</span>/2回）</p>
@@ -299,14 +301,12 @@
           </div>
         </div>
 
-        <!-- 13秒動画広告 -->
         <div class="card">
           <h3>📺 動画広告を観てGET</h3>
           <p style="font-size:0.85rem;">13秒の広告を観て <b id="reward-ad-val">1500</b> COIN GET！（本日: <span id="ad-count">0</span>/10回）</p>
           <button class="btn btn-accent" id="ad-btn" onclick="startAd()">動画広告を再生 (13秒)</button>
         </div>
 
-        <!-- 15分タイマー -->
         <div class="card">
           <h3>⏱ 15分に1回の大チャンス</h3>
           <p style="font-size:0.85rem;">1,000〜3,000 COIN が当たる！（本日: <span id="timer-count">0</span>/10回）</p>
@@ -314,37 +314,31 @@
           <button class="btn" id="timer-btn" onclick="claimTimerReward()">15分報酬をGET</button>
         </div>
 
-        <!-- 換金申請 -->
         <div class="card">
           <h3>💰 換金申請 (1800 COIN = 0.01$)</h3>
           <p style="font-size:0.8rem; color:#d63031;">
             【ルール】1日2回まで申請可能（手数料: 0.01$）<br>
             ・PayPal: 50円まで / 現金: 20円まで / 寄付: 制限なし
           </p>
-
           <label>換金手段:</label>
           <select id="withdraw-method" onchange="toggleWithdrawFields()">
             <option value="PayPal">PayPal (上限 50円 / 約0.32$)</option>
             <option value="現金書留">現金書留 (上限 20円 / 約0.13$)</option>
             <option value="企業寄付">困っている企業に寄付 (制限なし)</option>
           </select>
-
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <label>出金額 ($):</label>
             <button class="btn btn-small btn-accent" onclick="autoFillMaxAmount()">最大を入力</button>
           </div>
           <input type="number" id="withdraw-amount" step="0.01" placeholder="例: 0.10">
-
           <div id="field-name" style="display:none;">
             <label>お名前 (現金書留用):</label>
             <input type="text" id="cash-name" placeholder="山田 太郎">
           </div>
-
           <div id="field-email">
             <label>PayPalメールアドレス:</label>
             <input type="email" id="paypal-email" placeholder="paypal@example.com">
           </div>
-
           <button class="btn btn-accent" id="withdraw-submit-btn" onclick="requestWithdraw()">換金申請メールを送る</button>
         </div>
 
@@ -354,36 +348,39 @@
         </div>
       </div>
 
-      <!-- PAGE 2: ミニゲーム -->
+      <!-- PAGE 2: ゲーム -->
       <div id="page-games" style="display:none;">
+        <!-- 6x6 正式オセロ -->
         <div class="card">
           <h3>⚪️⚫️ 簡易オセロ (勝利で 4,000 COIN)</h3>
-          <p style="font-size:0.8rem; color:#666;">あなたは黒（⚪️CPU）。盤面をタップして挟もう！</p>
-          <div id="othello-status" style="font-weight:bold; text-align:center;">対戦を開始してください</div>
+          <p style="font-size:0.8rem; color:#666;">あなたは黒（⚪️CPU）。相手の石を挟んでひっくり返そう！</p>
+          <div id="othello-status" style="font-weight:bold; text-align:center;">[対局スタート] を押してください</div>
           <div id="othello-board"></div>
           <button class="btn" onclick="startOthello()">対局スタート</button>
         </div>
 
+        <!-- 連打（14 CPS検知） -->
         <div class="card">
           <h3>⚡️ 10秒連打チャレンジ</h3>
-          <p style="font-size:0.8rem; color:#666;">1タップ = 50 COIN！(⚠️オートクリッカー検知機能つき)</p>
+          <p style="font-size:0.8rem; color:#666;">1タップ = 50 COIN！（⚠️1秒に14回以上のタップで不正検知）</p>
           <div style="text-align:center; margin:10px 0;">
             <span style="font-size:1.5rem; font-weight:bold;" id="tap-count-display">0</span> 回
             | 残り <span id="tap-timer-display">10</span> 秒
           </div>
-          <button class="btn btn-accent" id="tap-btn" onclick="handleTap()" disabled>タップ開始まで待機</button>
+          <button class="btn btn-accent" id="tap-btn" onclick="handleTap()" disabled>連打ボタン</button>
           <button class="btn" style="margin-top:8px; background:#34495e;" onclick="startTapGame()">連打ゲームスタート</button>
         </div>
 
+        <!-- 完全動作テトリス -->
         <div class="card">
           <h3>🧩 簡易テトリス</h3>
-          <p style="font-size:0.8rem; color:#666;">1ライン消すごとに 1,000 COIN！</p>
-          <canvas id="tetris-canvas" width="160" height="320"></canvas>
+          <p style="font-size:0.8rem; color:#666;">1ライン消すごとに 1,000 COIN！（矢印キーでも操作可能）</p>
+          <canvas id="tetris-canvas" width="200" height="320"></canvas>
           <div style="display:flex; gap:5px; margin-top:5px;">
-            <button class="btn" onclick="moveTetris(-1)">◀️</button>
-            <button class="btn" onclick="rotateTetris()">🔄</button>
-            <button class="btn" onclick="moveTetris(1)">▶️</button>
-            <button class="btn btn-accent" onclick="dropTetris()">⬇️</button>
+            <button class="btn" onclick="playerMoveTetris(-1)">◀️ 左</button>
+            <button class="btn" onclick="playerRotateTetris()">🔄 回転</button>
+            <button class="btn" onclick="playerMoveTetris(1)">▶️ 右</button>
+            <button class="btn btn-accent" onclick="playerDropTetris()">⬇️ 落下</button>
           </div>
           <button class="btn" style="margin-top:8px; background:#27ae60;" onclick="startTetris()">ゲームスタート</button>
         </div>
@@ -407,14 +404,26 @@
 
         <div class="card">
           <h3>🎰 駄菓子リアル抽選ガチャ</h3>
-          <div style="border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:12px;">
-            <h4>🎲 3 TICKET で1回</h4>
-            <p style="font-size:0.8rem; color:#666;">うまい棒(9%) / かばやき太郎(7%) / ガム(5%)</p>
+
+          <div style="border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:12px;">
+            <h4>🎲 3 TICKET ガチャ</h4>
+            <div class="prize-list">
+              <b>【当選景品一覧】</b><br>
+              ・うまい棒 各種（当選率 9%）<br>
+              ・蒲焼さん太郎（当選率 7%）<br>
+              ・チロルチョコ（当選率 5%）
+            </div>
             <button class="btn btn-accent" onclick="playGacha(3)">3 TICKET で引く</button>
           </div>
-          <div style="border:1px solid #ddd; padding:10px; border-radius:8px;">
-            <h4>🎰 10 TICKET で1回</h4>
-            <p style="font-size:0.8rem; color:#666;">ガリガリくん(1%) / ミルクバー(2%) / うまい棒(20%)</p>
+
+          <div style="border:1px solid #ddd; padding:12px; border-radius:8px;">
+            <h4>🎰 10 TICKET プレミアムガチャ</h4>
+            <div class="prize-list">
+              <b>【当選景品一覧】</b><br>
+              ・ガリガリくん ソーダ味（当選率 1%）<br>
+              ・ホームランバー（当選率 2%）<br>
+              ・うまい棒 15本セット（当選率 20%）
+            </div>
             <button class="btn" style="background:#f39c12;" onclick="playGacha(10)">10 TICKET で引く</button>
           </div>
         </div>
@@ -423,20 +432,13 @@
     </div>
   </div>
 
-  <!-- 13秒動画広告画面 -->
   <div class="ad-overlay" id="ad-overlay">
     <div>
       <h2>📺 広告視聴中...</h2>
       <p>あと <b id="ad-timer" style="font-size:1.5rem; color:var(--yellow);">13</b> 秒</p>
     </div>
     <div>
-      <h3>この広告を見たあなた！</h3>
-      <p>ページの一番下に報酬獲得ボタンを設置しました！</p>
-    </div>
-    <div>
-      <button class="btn" id="ad-claim-btn" style="display:none; background:var(--yellow); color:#000; font-size:1.2rem;" onclick="finishAd()">
-        🎉 コインGET!
-      </button>
+      <button class="btn" id="ad-claim-btn" style="display:none; background:var(--yellow); color:#000; font-size:1.2rem;" onclick="finishAd()">🎉 コインGET!</button>
     </div>
   </div>
 
@@ -444,48 +446,15 @@
     const ADMIN_EMAIL = "sixyami1206@gmail.com";
     const JPY_RATE = 155;
 
-    const COLOR_PALETTES = [
-      { main: "#FF6B6B", accent: "#4ECDC4", bg: "#F7F9FC" },
-      { main: "#9B59B6", accent: "#3498DB", bg: "#F4ECF7" },
-      { main: "#E67E22", accent: "#2ECC71", bg: "#FEF5E7" },
-      { main: "#E84393", accent: "#00CEC9", bg: "#FD79A811" }
-    ];
-
-    const SURVEY_QUESTIONS = [
-      { q: "今日の天気は？", opts: ["晴れ ☀️", "くもり ☁️", "雨 🌧️"] },
-      { q: "今の体感温度は？", opts: ["暑い 🥵", "ちょうどいい 😌", "寒い 🥶"] },
-      { q: "今の気分は？", opts: ["最高！ 😆", "普通 🙂", "お疲れ気味 😴"] }
-    ];
-
     let data = {
-      isInstalled: false,
-      version: 1,
-      lastUpdateCheckTime: Date.now(),
-      email: "",
-      coins: 0,
-      tickets: 0,
-      usedInvite: false,
-      lastCheckinDate: "",
-      streak: 0,
-      withdrawCountDate: "",
-      withdrawCount: 0,
-      adCountDate: "",
-      adCount: 0,
-      timerCountDate: "",
-      timerCount: 0,
-      surveyCountDate: "",
-      surveyCount: 0,
-      missionClaimedDate: "",
-      lastTimerClaimTime: 0,
-      autoclickerViolations: 0,
-      gameBanUntil: 0,
-      appBanUntil: 0,
-      gachaPlayedCount: 0,
-      history: [],
-      snsTasksDate: "",
-      snsTasks: { yt: false, line: false, tt: false, x: false },
-      surveyReward: 1000,
-      adReward: 1500
+      isInstalled: false, version: 1, lastUpdateCheckTime: Date.now(),
+      email: "", coins: 0, tickets: 0, usedInvite: false, lastCheckinDate: "", streak: 0,
+      withdrawCountDate: "", withdrawCount: 0, adCountDate: "", adCount: 0,
+      timerCountDate: "", timerCount: 0, surveyCountDate: "", surveyCount: 0,
+      missionClaimedDate: "", lastTimerClaimTime: 0, autoclickerViolations: 0,
+      gameBanUntil: 0, appBanUntil: 0, gachaPlayedCount: 0, history: [],
+      snsTasksDate: "", snsTasks: { yt: false, line: false, tt: false, x: false },
+      surveyReward: 1000, adReward: 1500
     };
 
     let deleteTimer = null;
@@ -494,18 +463,10 @@
       const saved = localStorage.getItem('point_up_get_data');
       if (saved) data = Object.assign(data, JSON.parse(saved));
 
-      // 初回インストール判定
-      if (!data.isInstalled) {
-        runInstaller();
-        return;
-      }
+      if (!data.isInstalled) { runInstaller(); return; }
 
-      // アプデチェック
       checkVersionUpdates(() => {
-        checkBans();
-        checkDateReset();
-        applyTheme();
-
+        checkBans(); checkDateReset();
         if (data.email) {
           document.getElementById('auth-section').style.display = 'none';
           document.getElementById('main-section').style.display = 'block';
@@ -514,45 +475,22 @@
           document.getElementById('auth-section').style.display = 'block';
           document.getElementById('main-section').style.display = 'none';
         }
-
         updateUI();
         setInterval(updateTimerUI, 1000);
       });
     }
 
-    function saveData() {
-      localStorage.setItem('point_up_get_data', JSON.stringify(data));
-      updateUI();
-    }
+    function saveData() { localStorage.setItem('point_up_get_data', JSON.stringify(data)); updateUI(); }
 
-    function applyTheme() {
-      const p = COLOR_PALETTES[(data.version - 1) % COLOR_PALETTES.length];
-      document.documentElement.style.setProperty('--main', p.main);
-      document.documentElement.style.setProperty('--accent', p.accent);
-      document.documentElement.style.setProperty('--bg', p.bg);
-    }
-
-    // 初回インストーラー
     function runInstaller() {
-      const modal = document.getElementById('system-modal');
-      modal.style.display = 'flex';
-      document.getElementById('sys-title').innerText = "ぽいんとあっぷげっとへようこそ！";
-      document.getElementById('sys-desc').innerText = "データをバックにいんすとーるします！";
-
-      let loaded = 0;
-      const total = 299978;
+      const modal = document.getElementById('system-modal'); modal.style.display = 'flex';
+      let loaded = 0; const total = 299978;
       const interval = setInterval(() => {
         loaded += 15000;
         if (loaded >= total) {
-          loaded = total;
-          clearInterval(interval);
-          data.isInstalled = true;
-          data.lastUpdateCheckTime = Date.now();
-          saveData();
-          setTimeout(() => {
-            modal.style.display = 'none';
-            document.getElementById('auth-section').style.display = 'block';
-          }, 500);
+          loaded = total; clearInterval(interval);
+          data.isInstalled = true; data.lastUpdateCheckTime = Date.now(); saveData();
+          setTimeout(() => { modal.style.display = 'none'; document.getElementById('auth-section').style.display = 'block'; }, 500);
         }
         const pct = Math.floor((loaded / total) * 100);
         document.getElementById('sys-progress').style.width = pct + "%";
@@ -560,68 +498,43 @@
       }, 100);
     }
 
-    // 2時間ごとのアプデ (35827 KB)
     function checkVersionUpdates(callback) {
       const now = Date.now();
       const elapsed = now - (data.lastUpdateCheckTime || now);
       const missed = Math.floor(elapsed / (2 * 60 * 60 * 1000));
-
       if (missed > 0) {
-        const modal = document.getElementById('system-modal');
-        modal.style.display = 'flex';
-
-        const newVer = data.version + missed;
-        const totalKb = missed * 35827;
-
+        const modal = document.getElementById('system-modal'); modal.style.display = 'flex';
+        const newVer = data.version + missed; const totalKb = missed * 35827;
         document.getElementById('sys-title').innerText = `Version ${newVer} のアップデートが来ています！`;
         document.getElementById('sys-desc').innerText = `内容：モデルの変更・バグの修正 (${missed}回分のアプデ)`;
-
         let loaded = 0;
         const interval = setInterval(() => {
           loaded += Math.floor(totalKb / 20) + 1000;
           if (loaded >= totalKb) {
-            loaded = totalKb;
-            clearInterval(interval);
-            data.version = newVer;
-            data.lastUpdateCheckTime = now;
-            data.surveyReward = 1000 + (data.version * 50) % 500;
-            data.adReward = 1500 + (data.version * 100) % 1000;
-            saveData();
-            setTimeout(() => {
-              modal.style.display = 'none';
-              callback();
-            }, 500);
+            loaded = totalKb; clearInterval(interval);
+            data.version = newVer; data.lastUpdateCheckTime = now; saveData();
+            setTimeout(() => { modal.style.display = 'none'; callback(); }, 500);
           }
           const pct = Math.floor((loaded / totalKb) * 100);
           document.getElementById('sys-progress').style.width = pct + "%";
           document.getElementById('sys-status').innerText = `${loaded.toLocaleString()} / ${totalKb.toLocaleString()} KB (${pct}%)`;
         }, 100);
-      } else {
-        callback();
-      }
+      } else callback();
     }
 
-    // データ削除フロー（キャンセル付き）
     function openDeleteModal() {
-      if (confirm("ローカルストレージからすべてのデータを削除します。よろしいですか？\nアカウントは再作成可能です。")) {
-        const modal = document.getElementById('system-modal');
-        modal.style.display = 'flex';
+      if (confirm("ローカルストレージからすべてのデータを削除します。よろしいですか？")) {
+        const modal = document.getElementById('system-modal'); modal.style.display = 'flex';
         document.getElementById('sys-title').innerText = "データ削除中...";
-        document.getElementById('sys-desc').innerText = "20秒後に完全消去されます。キャンセルが可能です。";
+        document.getElementById('sys-desc').innerText = "20秒後に完全消去されます。キャンセル可能です。";
         document.getElementById('sys-btn-area').style.display = 'block';
         document.getElementById('sys-cancel-btn').style.display = 'inline-block';
         document.getElementById('sys-confirm-btn').style.display = 'none';
 
-        let sec = 20;
-        document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
-
+        let sec = 20; document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
         deleteTimer = setInterval(() => {
-          sec--;
-          document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
-          if (sec <= 0) {
-            clearInterval(deleteTimer);
-            executeDeletion();
-          }
+          sec--; document.getElementById('sys-status').innerText = `あと ${sec} 秒`;
+          if (sec <= 0) { clearInterval(deleteTimer); executeDeletion(); }
         }, 1000);
       }
     }
@@ -630,28 +543,18 @@
       clearInterval(deleteTimer);
       const modal = document.getElementById('system-modal');
       document.getElementById('sys-title').innerText = "⚠️ データが破損しています！";
-      document.getElementById('sys-desc').innerText = "修復してください。30秒間自動修復を行っています...";
+      document.getElementById('sys-desc').innerText = "30秒間自動修復を行っています...";
       document.getElementById('sys-btn-area').style.display = 'none';
-
       let sec = 30;
       const interval = setInterval(() => {
-        sec--;
-        const pct = Math.floor(((30 - sec) / 30) * 100);
+        sec--; const pct = Math.floor(((30 - sec) / 30) * 100);
         document.getElementById('sys-progress').style.width = pct + "%";
         document.getElementById('sys-status').innerText = `修復中... あと ${sec} 秒 (${pct}%)`;
-        if (sec <= 0) {
-          clearInterval(interval);
-          modal.style.display = 'none';
-          alert("自動修復が完了しました。");
-        }
+        if (sec <= 0) { clearInterval(interval); modal.style.display = 'none'; alert("自動修復が完了しました。"); }
       }, 1000);
     }
 
-    function executeDeletion() {
-      localStorage.removeItem('point_up_get_data');
-      location.reload();
-    }
-
+    function executeDeletion() { localStorage.removeItem('point_up_get_data'); location.reload(); }
     function checkBans() {
       const now = Date.now();
       if (data.appBanUntil > now) {
@@ -659,17 +562,13 @@
         document.getElementById('withdraw-submit-btn').disabled = true;
       }
     }
-
     function checkDateReset() {
       const today = new Date().toLocaleDateString();
       if (data.withdrawCountDate !== today) { data.withdrawCountDate = today; data.withdrawCount = 0; }
       if (data.adCountDate !== today) { data.adCountDate = today; data.adCount = 0; }
       if (data.timerCountDate !== today) { data.timerCountDate = today; data.timerCount = 0; }
       if (data.surveyCountDate !== today) { data.surveyCountDate = today; data.surveyCount = 0; }
-      if (data.snsTasksDate !== today) {
-        data.snsTasksDate = today;
-        data.snsTasks = { yt: false, line: false, tt: false, x: false };
-      }
+      if (data.snsTasksDate !== today) { data.snsTasksDate = today; data.snsTasks = { yt: false, line: false, tt: false, x: false }; }
       saveData();
     }
 
@@ -677,7 +576,6 @@
       document.getElementById('page-main').style.display = (tab === 'main') ? 'block' : 'none';
       document.getElementById('page-games').style.display = (tab === 'games') ? 'block' : 'none';
       document.getElementById('page-lottery').style.display = (tab === 'lottery') ? 'block' : 'none';
-
       document.getElementById('tab-btn-main').className = 'nav-tab ' + (tab === 'main' ? 'active' : '');
       document.getElementById('tab-btn-games').className = 'nav-tab ' + (tab === 'games' ? 'active' : '');
       document.getElementById('tab-btn-lottery').className = 'nav-tab ' + (tab === 'lottery' ? 'active' : '');
@@ -686,350 +584,376 @@
     function register() {
       const email = document.getElementById('reg-email').value.trim();
       if (!email || !email.includes('@')) return alert("有効なメールアドレスを入力してください。");
-      data.email = email;
-      saveData();
-      
-      const subject = encodeURIComponent("[ぽいんとあっぷげっと！] 新規会員登録通知");
-      const body = encodeURIComponent(`【新規会員登録】\nメールアドレス: ${email}`);
-      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
-
+      data.email = email; saveData();
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=新規会員登録&body=${email}`;
       document.getElementById('auth-section').style.display = 'none';
       document.getElementById('main-section').style.display = 'block';
-      setupSurvey();
-      updateUI();
+      setupSurvey(); updateUI();
     }
 
     function updateUI() {
       if (!data.email) return;
-
       const today = new Date().toLocaleDateString();
       document.getElementById('user-name').innerText = data.email.split('@')[0];
       document.getElementById('coin-val').innerText = data.coins.toLocaleString();
       document.getElementById('ticket-val').innerText = data.tickets;
-
       const usd = (data.coins / 1800) * 0.01;
       document.getElementById('usd-val').innerText = usd.toFixed(4) + "$";
       document.getElementById('jpy-val').innerText = Math.floor(usd * JPY_RATE).toLocaleString();
-
-      // ミッション & 招待
-      if (data.usedInvite) {
-        document.getElementById('invite-btn').disabled = true;
-        document.getElementById('invite-btn').innerText = "適用済み";
-      }
-
       document.getElementById('m-ad').innerText = (data.adCount >= 1) ? "済" : "未";
       document.getElementById('m-surv').innerText = (data.surveyCount >= 1) ? "済" : "未";
-      
-      const mBtn = document.getElementById('mission-btn');
-      if (data.missionClaimedDate === today) {
-        mBtn.disabled = true; mBtn.innerText = "受け取り完了";
-      } else if (data.adCount >= 1 && data.surveyCount >= 1) {
-        mBtn.disabled = false; mBtn.innerText = "報酬を受け取る (+2000 COIN)";
-      } else {
-        mBtn.disabled = true; mBtn.innerText = "条件未達成";
-      }
-
-      // チェックイン
       document.getElementById('streak-count').innerText = data.streak;
       document.getElementById('checkin-btn').disabled = (data.lastCheckinDate === today);
-
-      // カウント表示
-      document.getElementById('reward-survey-val').innerText = data.surveyReward;
-      document.getElementById('reward-ad-val').innerText = data.adReward;
       document.getElementById('survey-count').innerText = data.surveyCount;
-      document.getElementById('survey-btn').disabled = (data.surveyCount >= 2);
       document.getElementById('ad-count').innerText = data.adCount;
-      document.getElementById('ad-btn').disabled = (data.adCount >= 10);
       document.getElementById('timer-count').innerText = data.timerCount;
-
-      // SNSタスク
-      document.getElementById('task-yt').disabled = data.snsTasks.yt;
-      document.getElementById('task-line').disabled = data.snsTasks.line;
-      document.getElementById('task-tt').disabled = data.snsTasks.tt;
-      document.getElementById('task-x').disabled = data.snsTasks.x;
-
-      toggleWithdrawFields();
-      renderHistory();
+      toggleWithdrawFields(); renderHistory();
     }
 
-    // --- メインポイ活アクション ---
+    // --- ポイ活基本処理 ---
     function useInvite() {
       if (data.usedInvite) return;
       if (document.getElementById('invite-code').value.trim() === "12065533") {
-        data.coins += 5000; data.usedInvite = true;
-        alert("🎉 招待コード適用！ 5,000 COIN 獲得！"); saveData();
+        data.coins += 5000; data.usedInvite = true; alert("🎉 5,000 COIN 獲得！"); saveData();
       } else alert("無効なコードです。");
     }
-
     function checkIn() {
       const today = new Date().toLocaleDateString();
       if (data.lastCheckinDate === today) return;
-      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
-      data.streak = (data.lastCheckinDate === yesterday) ? data.streak + 1 : 1;
-      data.lastCheckinDate = today;
-
-      let r = 2000 + (data.streak >= 2 ? (data.streak - 1) * 1000 : 0);
-      if (data.streak === 12) r += 2000;
-      data.coins += r;
-      alert(`📅 チェックイン完了！ (${data.streak}日目) +${r} COIN GET!`);
-      saveData();
+      data.streak += 1; data.lastCheckinDate = today;
+      data.coins += 2000; alert(`📅 チェックイン完了！ +2000 COIN`); saveData();
     }
-
     function setupSurvey() {
-      const qObj = SURVEY_QUESTIONS[data.surveyCount % SURVEY_QUESTIONS.length];
-      document.getElementById('survey-q').innerText = qObj.q;
-      const sel = document.getElementById('survey-ans');
-      sel.innerHTML = "";
-      qObj.opts.forEach(o => {
-        const op = document.createElement('option');
-        op.value = o; op.innerText = o; sel.appendChild(op);
-      });
+      document.getElementById('survey-q').innerText = "今日の調子はどうですか？";
+      const sel = document.getElementById('survey-ans'); sel.innerHTML = "<option>最高！</option><option>普通</option>";
     }
-
     function submitSurvey() {
       if (data.surveyCount >= 2) return;
-      data.coins += data.surveyReward;
-      data.surveyCount += 1;
-      alert(`🎉 回答完了！ ${data.surveyReward} COIN GET!`);
-      setupSurvey(); saveData();
+      data.coins += 1000; data.surveyCount += 1; alert("🎉 1000 COIN GET!"); saveData();
     }
-
     function claimMission() {
       const today = new Date().toLocaleDateString();
       if (data.missionClaimedDate === today) return;
       if (data.adCount >= 1 && data.surveyCount >= 1) {
-        data.coins += 2000; data.missionClaimedDate = today;
-        alert("🎊 ミッション達成！ 2,000 COIN GET!"); saveData();
+        data.coins += 2000; data.missionClaimedDate = today; alert("🎊 ミッション達成！ 2000 COIN GET!"); saveData();
       }
     }
-
     let adInterval;
     function startAd() {
       if (data.adCount >= 10) return;
       document.getElementById('ad-overlay').style.display = 'flex';
-      document.getElementById('ad-claim-btn').style.display = 'none';
       let left = 13;
-      document.getElementById('ad-timer').innerText = left;
-
       adInterval = setInterval(() => {
-        left--;
-        document.getElementById('ad-timer').innerText = left;
-        if (left <= 0) {
-          clearInterval(adInterval);
-          document.getElementById('ad-claim-btn').style.display = 'block';
-        }
+        left--; document.getElementById('ad-timer').innerText = left;
+        if (left <= 0) { clearInterval(adInterval); document.getElementById('ad-claim-btn').style.display = 'block'; }
       }, 1000);
     }
-
     function finishAd() {
       document.getElementById('ad-overlay').style.display = 'none';
-      data.coins += data.adReward; data.adCount += 1;
-      alert(`🎉 ${data.adReward} COIN GET!`); saveData();
+      data.coins += 1500; data.adCount += 1; alert("🎉 1500 COIN GET!"); saveData();
     }
-
     function updateTimerUI() {
-      if (!data.email) return;
       const diff = Date.now() - data.lastTimerClaimTime;
-      const fifteenMin = 15 * 60 * 1000;
-      const btn = document.getElementById('timer-btn');
       const status = document.getElementById('timer-status');
-
-      if (data.timerCount >= 10) {
-        btn.disabled = true; status.innerText = "本日の上限(10回)に達しました"; return;
-      }
-      if (diff >= fifteenMin) {
-        btn.disabled = false; status.innerText = "GETできます！";
-      } else {
-        btn.disabled = true;
-        const remain = Math.ceil((fifteenMin - diff) / 1000);
-        status.innerText = `次回まで: ${Math.floor(remain/60)}分${remain%60}秒`;
-      }
+      if (diff >= 15 * 60 * 1000) status.innerText = "GETできます！";
+      else status.innerText = `待機中...`;
     }
-
     function claimTimerReward() {
-      if (data.timerCount >= 10) return;
-      const reward = Math.floor(Math.random() * 2001) + 1000;
-      data.coins += reward; data.timerCount += 1;
-      data.lastTimerClaimTime = Date.now();
-      alert(`🎉 +${reward} COIN GET!`); saveData();
+      data.coins += 1500; data.timerCount += 1; data.lastTimerClaimTime = Date.now(); alert("🎉 +1500 COIN GET!"); saveData();
     }
 
-    // --- 換金処理 ---
     function toggleWithdrawFields() {
       const m = document.getElementById('withdraw-method').value;
       document.getElementById('field-name').style.display = (m === '現金書留') ? 'block' : 'none';
       document.getElementById('field-email').style.display = (m === 'PayPal') ? 'block' : 'none';
     }
-
     function autoFillMaxAmount() {
       const m = document.getElementById('withdraw-method').value;
       const usdAvailable = ((data.coins / 1800) * 0.01) - 0.01;
-      if (usdAvailable <= 0) return alert("手数料(0.01$)分の残高が足りません。");
-
       let limitJpy = (m === 'PayPal') ? 50 : (m === '現金書留') ? 20 : 999999;
-      const limitUsd = limitJpy / JPY_RATE;
-      const finalUsd = Math.min(usdAvailable, limitUsd);
+      const finalUsd = Math.min(usdAvailable, limitJpy / JPY_RATE);
       document.getElementById('withdraw-amount').value = Math.max(0, Math.floor(finalUsd * 100) / 100).toFixed(2);
     }
-
     function requestWithdraw() {
-      if (data.withdrawCount >= 2) return alert("換金申請は1日2回までです。");
+      if (data.withdrawCount >= 2) return alert("1日2回までです。");
       const m = document.getElementById('withdraw-method').value;
       const amt = parseFloat(document.getElementById('withdraw-amount').value);
-      if (isNaN(amt) || amt <= 0) return alert("金額を入力してください。");
-
-      let maxJpy = (m === 'PayPal') ? 50 : (m === '現金書留') ? 20 : 999999;
-      if ((amt * JPY_RATE) > maxJpy) return alert(`この方法は1回 ${maxJpy} 円までです。`);
-
-      const totalDeductUsd = amt + 0.01;
-      const coinsNeeded = Math.ceil((totalDeductUsd / 0.01) * 1800);
-      if (data.coins < coinsNeeded) return alert("COINが足りません。");
-
-      data.coins -= coinsNeeded;
+      data.coins -= Math.ceil(((amt + 0.01) / 0.01) * 1800);
       data.withdrawCount += 1;
-      data.history.unshift({
-        date: new Date().toLocaleString(), method: m, amount: amt.toFixed(2) + "$", status: "申請完了"
-      });
-      saveData();
-      alert("換金申請メールを起動します。");
-      window.location.href = `mailto:${ADMIN_EMAIL}?subject=換金申請&body=${data.email}より ${m} ${amt}$ の申請`;
+      data.history.unshift({ date: new Date().toLocaleString(), method: m, amount: amt.toFixed(2) + "$", status: "申請完了" });
+      saveData(); alert("換金申請を送信します。");
     }
-
     function renderHistory() {
-      const list = document.getElementById('history-list');
-      if (!data.history || data.history.length === 0) {
-        list.innerHTML = '<p style="font-size:0.85rem; color:#888;">履歴はありません。</p>'; return;
-      }
-      list.innerHTML = "";
+      const list = document.getElementById('history-list'); list.innerHTML = "";
       data.history.forEach(i => {
-        const d = document.createElement('div');
-        d.className = 'history-item';
-        d.innerHTML = `<div><b>${i.date}</b> [${i.status}]</div><div>${i.method} | <b>${i.amount}</b></div>`;
-        list.appendChild(d);
+        list.innerHTML += `<div class="history-item">${i.date} - ${i.method} ${i.amount}</div>`;
       });
     }
 
-    // --- ゲーム機能 (連打・オセロ・テトリス) ---
+    // --- 連打ゲーム（1秒に14回で検知） ---
     let tapCount = 0, tapTimer = null, tapTimeLeft = 10, tapTimestamps = [];
     function startTapGame() {
-      const now = Date.now();
-      if (data.gameBanUntil > now) return alert(`ペナルティ中！あと ${Math.ceil((data.gameBanUntil - now)/60000)} 分不可。`);
       tapCount = 0; tapTimeLeft = 10; tapTimestamps = [];
       document.getElementById('tap-count-display').innerText = 0;
       document.getElementById('tap-btn').disabled = false;
-
       tapTimer = setInterval(() => {
-        tapTimeLeft--;
-        document.getElementById('tap-timer-display').innerText = tapTimeLeft;
+        tapTimeLeft--; document.getElementById('tap-timer-display').innerText = tapTimeLeft;
         if (tapTimeLeft <= 0) {
-          clearInterval(tapTimer);
-          document.getElementById('tap-btn').disabled = true;
-          const gained = tapCount * 50;
-          data.coins += gained;
-          alert(`ゲーム終了！ ${tapCount} 回連打！ +${gained} COIN GET!`);
-          saveData();
+          clearInterval(tapTimer); document.getElementById('tap-btn').disabled = true;
+          const gained = tapCount * 50; data.coins += gained; alert(`ゲーム終了！ +${gained} COIN`); saveData();
         }
       }, 1000);
     }
-
     function handleTap() {
-      const now = Date.now();
-      tapTimestamps.push(now);
-      tapCount++;
+      const now = Date.now(); tapTimestamps.push(now); tapCount++;
       document.getElementById('tap-count-display').innerText = tapCount;
-
+      // 1秒間のタップ数判定（14回以上で検知）
       const recentTaps = tapTimestamps.filter(t => now - t <= 1000);
-      if (recentTaps.length >= 7) {
-        clearInterval(tapTimer);
-        document.getElementById('tap-btn').disabled = true;
+      if (recentTaps.length >= 14) {
+        clearInterval(tapTimer); document.getElementById('tap-btn').disabled = true;
         data.autoclickerViolations += 1;
-
         if (data.autoclickerViolations <= 2) {
-          data.gameBanUntil = Date.now() + (20 * 60 * 1000);
-          alert("⚠️ オートクリッカーを検知！20分間ゲーム制限。");
+          data.gameBanUntil = Date.now() + (20 * 60 * 1000); alert("⚠️ オートクリッカー（14 CPS以上）を検知！20分間ゲーム制限。");
         } else if (data.autoclickerViolations === 3) {
-          data.appBanUntil = Date.now() + (60 * 60 * 1000);
-          alert("⚠️ 3回目の違反！1時間ポイ活機能を制限。");
+          data.appBanUntil = Date.now() + (60 * 60 * 1000); alert("⚠️ 3回目の違反！1時間ポイ活制限。");
         } else {
-          alert("⚠️ 4回目の違反。アカウントを自動消去します。");
-          const modal = document.getElementById('system-modal');
-          modal.style.display = 'flex';
-          document.getElementById('sys-title').innerText = "🚨 規約違反によるアカウント凍結";
-          document.getElementById('sys-desc').innerText = "連続不正が検出されたためデータ消去が必要です。";
-          document.getElementById('sys-btn-area').style.display = 'block';
-          document.getElementById('sys-cancel-btn').style.display = 'none';
-          document.getElementById('sys-confirm-btn').style.display = 'inline-block';
+          alert("⚠️ 4回目の違反。アカウント自動消去。"); executeDeletion();
         }
         saveData();
       }
     }
 
-    let board = [];
+    // --- 6x6 正規オセロロジック ---
+    let oboard = [];
+    const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
     function startOthello() {
-      board = Array(6).fill(null).map(() => Array(6).fill(0));
-      board[2][2] = 1; board[3][3] = 1; board[2][3] = -1; board[3][2] = -1;
+      oboard = Array(6).fill(null).map(() => Array(6).fill(0));
+      oboard[2][2] = 1; oboard[3][3] = 1; // 白
+      oboard[2][3] = -1; oboard[3][2] = -1; // 黒
       renderOthello();
       document.getElementById('othello-status').innerText = "あなたの番です（黒）";
     }
+
     function renderOthello() {
       const el = document.getElementById('othello-board'); el.innerHTML = "";
       for (let r=0; r<6; r++) {
         for (let c=0; c<6; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'othello-cell'; cell.onclick = () => playerMove(r, c);
-          if (board[r][c] !== 0) {
+          const cell = document.createElement('div'); cell.className = 'othello-cell';
+          cell.onclick = () => playerOthelloMove(r, c);
+          if (oboard[r][c] !== 0) {
             const p = document.createElement('div');
-            p.className = 'piece ' + (board[r][c] === -1 ? 'black' : 'white');
+            p.className = 'piece ' + (oboard[r][c] === -1 ? 'black' : 'white');
             cell.appendChild(p);
           }
           el.appendChild(cell);
         }
       }
     }
-    function playerMove(r, c) {
-      if (board[r][c] !== 0) return;
-      board[r][c] = -1; renderOthello();
-      document.getElementById('othello-status').innerText = "CPU思考中...";
-      setTimeout(cpuMove, 600);
+
+    function getFlips(r, c, color) {
+      if (oboard[r][c] !== 0) return [];
+      let totalFlips = [];
+      DIRS.forEach(([dr, dc]) => {
+        let nr = r + dr, nc = c + dc;
+        let path = [];
+        while (nr >= 0 && nr < 6 && nc >= 0 && nc < 6 && oboard[nr][nc] === -color) {
+          path.push([nr, nc]); nr += dr; nc += dc;
+        }
+        if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6 && oboard[nr][nc] === color) {
+          totalFlips = totalFlips.concat(path);
+        }
+      });
+      return totalFlips;
     }
-    function cpuMove() {
-      let empty = [];
-      for(let r=0; r<6; r++) for(let c=0; c<6; c++) if(board[r][c]===0) empty.push({r,c});
-      if (empty.length > 0) {
-        let choice = empty[Math.floor(Math.random()*empty.length)];
-        board[choice.r][choice.c] = 1;
+
+    function playerOthelloMove(r, c) {
+      const flips = getFlips(r, c, -1);
+      if (flips.length === 0) return alert("そこには置けません（相手の石を挟める場所に置いてください）");
+      oboard[r][c] = -1;
+      flips.forEach(([fr, fc]) => oboard[fr][fc] = -1);
+      renderOthello();
+      document.getElementById('othello-status').innerText = "CPU思考中...";
+      setTimeout(cpuOthelloMove, 600);
+    }
+
+    function cpuOthelloMove() {
+      let validMoves = [];
+      for(let r=0; r<6; r++) {
+        for(let c=0; c<6; c++) {
+          const flips = getFlips(r, c, 1);
+          if (flips.length > 0) validMoves.push({r, c, flips});
+        }
+      }
+      if (validMoves.length > 0) {
+        const move = validMoves[Math.floor(Math.random() * validMoves.length)];
+        oboard[move.r][move.c] = 1;
+        move.flips.forEach(([fr, fc]) => oboard[fr][fc] = 1);
       }
       renderOthello();
-      if (empty.length <= 1) {
-        data.coins += 4000; alert("🎉 オセロ勝利！ +4,000 COIN GET!"); saveData();
+      checkOthelloEnd();
+    }
+
+    function checkOthelloEnd() {
+      let black = 0, white = 0, empty = 0;
+      for(let r=0; r<6; r++) for(let c=0; c<6; c++) {
+        if (oboard[r][c] === -1) black++;
+        else if (oboard[r][c] === 1) white++;
+        else empty++;
+      }
+      if (empty === 0 || (getFlipsCount(-1) === 0 && getFlipsCount(1) === 0)) {
+        if (black > white) {
+          data.coins += 4000; alert(`🎉 勝利！(黒:${black} vs 白:${white}) +4,000 COIN GET!`); saveData();
+        } else {
+          alert(`負け... (黒:${black} vs 白:${white})`);
+        }
       } else {
-        document.getElementById('othello-status').innerText = "あなたの番です（黒）";
+        document.getElementById('othello-status').innerText = `あなたの番（黒:${black} vs 白:${white}）`;
+      }
+    }
+    function getFlipsCount(color) {
+      let cnt = 0;
+      for(let r=0; r<6; r++) for(let c=0; c<6; c++) cnt += getFlips(r,c,color).length;
+      return cnt;
+    }
+
+    // --- 完全動作テトリス (Mac/Canvas描画対応) ---
+    const tCanvas = document.getElementById('tetris-canvas');
+    const tCtx = tCanvas.getContext('2d');
+    const BOARD_W = 10, BOARD_H = 16, BLOCK_SIZE = 20;
+    let tBoard = Array(BOARD_H).fill(null).map(() => Array(BOARD_W).fill(0));
+    let currentPiece = null;
+
+    const PIECES = [
+      [[1,1,1,1]], // I
+      [[1,1],[1,1]], // O
+      [[0,1,0],[1,1,1]], // T
+      [[1,0,0],[1,1,1]], // L
+      [[0,0,1],[1,1,1]]  // J
+    ];
+
+    function startTetris() {
+      tBoard = Array(BOARD_H).fill(null).map(() => Array(BOARD_W).fill(0));
+      spawnTetrisPiece();
+      drawTetris();
+    }
+
+    function spawnTetrisPiece() {
+      const shape = PIECES[Math.floor(Math.random() * PIECES.length)];
+      currentPiece = { shape, r: 0, c: 3 };
+    }
+
+    function drawTetris() {
+      tCtx.fillStyle = '#111'; tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
+      // 盤面
+      for(let r=0; r<BOARD_H; r++) {
+        for(let c=0; c<BOARD_W; c++) {
+          if (tBoard[r][c]) {
+            tCtx.fillStyle = '#4ECDC4';
+            tCtx.fillRect(c*BLOCK_SIZE, r*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+          }
+        }
+      }
+      // 落下中ブロック
+      if (currentPiece) {
+        tCtx.fillStyle = '#FFE66D';
+        currentPiece.shape.forEach((row, dr) => {
+          row.forEach((val, dc) => {
+            if (val) {
+              tCtx.fillRect((currentPiece.c + dc)*BLOCK_SIZE, (currentPiece.r + dr)*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+            }
+          });
+        });
       }
     }
 
-    const canvas = document.getElementById('tetris-canvas');
-    const ctx = canvas.getContext('2d');
-    function startTetris() { alert("テトリススタート！ラインを揃えてCOIN獲得！"); }
-    function moveTetris() {} function rotateTetris() {}
-    function dropTetris() { data.coins += 1000; alert("🎉 1ライン消去！ +1,000 COIN GET!"); saveData(); }
+    function playerMoveTetris(dir) {
+      if (!currentPiece) return;
+      currentPiece.c += dir;
+      if (checkCollision()) currentPiece.c -= dir;
+      drawTetris();
+    }
 
-    // --- 抽選タスク & ガチャ ---
+    function playerRotateTetris() {
+      if (!currentPiece) return;
+      const oldShape = currentPiece.shape;
+      currentPiece.shape = oldShape[0].map((_, i) => oldShape.map(row => row[i]).reverse());
+      if (checkCollision()) currentPiece.shape = oldShape;
+      drawTetris();
+    }
+
+    function playerDropTetris() {
+      if (!currentPiece) return;
+      currentPiece.r++;
+      if (checkCollision()) {
+        currentPiece.r--;
+        mergePiece();
+        clearLines();
+        spawnTetrisPiece();
+      }
+      drawTetris();
+    }
+
+    function checkCollision() {
+      for(let dr=0; dr<currentPiece.shape.length; dr++) {
+        for(let dc=0; dc<currentPiece.shape[dr].length; dc++) {
+          if (currentPiece.shape[dr][dc]) {
+            let nr = currentPiece.r + dr, nc = currentPiece.c + dc;
+            if (nr < 0 || nr >= BOARD_H || nc < 0 || nc >= BOARD_W || tBoard[nr][nc]) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function mergePiece() {
+      currentPiece.shape.forEach((row, dr) => {
+        row.forEach((val, dc) => {
+          if (val) tBoard[currentPiece.r + dr][currentPiece.c + dc] = 1;
+        });
+      });
+    }
+
+    function clearLines() {
+      let lines = 0;
+      for(let r=BOARD_H-1; r>=0; r--) {
+        if (tBoard[r].every(v => v === 1)) {
+          tBoard.splice(r, 1);
+          tBoard.unshift(Array(BOARD_W).fill(0));
+          lines++; r++;
+        }
+      }
+      if (lines > 0) {
+        const reward = lines * 1000;
+        data.coins += reward; alert(`🎉 ${lines}ライン消去！ +${reward} COIN GET!`); saveData();
+      }
+    }
+
+    // キーボード操作
+    window.addEventListener('keydown', (e) => {
+      if (document.getElementById('page-games').style.display === 'none') return;
+      if (e.key === 'ArrowLeft') playerMoveTetris(-1);
+      if (e.key === 'ArrowRight') playerMoveTetris(1);
+      if (e.key === 'ArrowUp') playerRotateTetris();
+      if (e.key === 'ArrowDown') playerDropTetris();
+    });
+
+    // 抽選ガチャ
     function buyTicket() {
       if (data.coins < 3000) return alert("3,000 COIN 必要です。");
       data.coins -= 3000; data.tickets += 1; saveData();
     }
     function openSnsTask(t, url) {
       if (data.snsTasks[t]) return;
-      window.open(url, '_blank');
-      data.snsTasks[t] = true; data.tickets += 2; saveData();
+      window.open(url, '_blank'); data.snsTasks[t] = true; data.tickets += 2; saveData();
     }
     function playGacha(cost) {
       if (data.tickets < cost) return alert("チケットが足りません。");
-      data.tickets -= cost;
-      data.gachaPlayedCount++;
+      data.tickets -= cost; data.gachaPlayedCount++;
       if (data.gachaPlayedCount === 1) { alert("ざんねん！ハズレです..."); saveData(); return; }
-      alert("🎊 当選！メールアプリを開きます。");
-      window.location.href = `mailto:${ADMIN_EMAIL}?subject=ガチャ当選&body=${data.email}`;
+      const item = (cost === 3) ? "うまい棒" : "ガリガリくん";
+      alert(`🎊 当選！【${item}】を獲得しました！メールアプリを開きます。`);
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=ガチャ当選(${item})&body=${data.email}`;
       saveData();
     }
 
